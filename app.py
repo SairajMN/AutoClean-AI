@@ -90,6 +90,33 @@ async def startup_event():
 
 
 # ============================================================
+# Root Endpoint
+# ============================================================
+
+@app.get("/")
+async def root():
+    """Root endpoint with API information."""
+    return {
+        "name": "OpenEnv Data Cleaner",
+        "version": "1.0.0",
+        "description": "OpenEnv-compliant AI-powered data cleaning environment",
+        "endpoints": {
+            "GET /health": "Health check",
+            "GET /tasks": "List available tasks",
+            "GET /state": "Get current environment state",
+            "GET /dataset": "Get dataset information",
+            "GET /history": "Get action history",
+            "POST /reset": "Initialize a new task",
+            "POST /step": "Execute a cleaning action",
+            "POST /submit": "Submit solution for grading",
+            "POST /revert": "Revert last action"
+        },
+        "docs": "/docs",
+        "space": "https://huggingface.co/spaces/sairaj2/openenv-datacleaner"
+    }
+
+
+# ============================================================
 # Core OpenEnv Endpoints
 # ============================================================
 
