@@ -1,6 +1,6 @@
 """
 OpenEnv Data Cleaning Environment - Core Environment Implementation
-Extends BaseEnv from openenv-core for full OpenEnv lifecycle compliance.
+Extends Environment from openenv-core for full OpenEnv lifecycle compliance.
 """
 
 import logging
@@ -10,9 +10,9 @@ from typing import Optional, Dict, Any, List, Tuple
 import pandas as pd
 import numpy as np
 
-from openenv.env import BaseEnv
+from openenv.core import Environment, Action, Observation, State
 
-from env.models import Action, Observation, Reward, EnvState, GradeResult
+from env.models import Reward, EnvState, GradeResult
 from env.action_engine import ActionEngine, ActionValidationError, ActionExecutionError
 from env.tasks import get_task_config, get_tasks
 from env.grader import Grader
@@ -21,7 +21,7 @@ from env.reward import RewardCalculator
 logger = logging.getLogger("openenv-datacleaner.env")
 
 
-class DataCleaningEnv(BaseEnv):
+class DataCleaningEnv(Environment):
     """
     OpenEnv-compliant Data Cleaning Environment.
     
@@ -114,7 +114,7 @@ class DataCleaningEnv(BaseEnv):
         
         return observation
 
-    def step(self, action: Action) -> Tuple[Observation, Reward, bool, Dict[str, Any]]:
+    def step(self, action: Action) -> Tuple[Observation, float, bool, Dict[str, Any]]:
         """
         Execute an action in the environment.
         OpenEnv lifecycle method.
@@ -133,96 +133,118 @@ class DataCleaningEnv(BaseEnv):
                     "final_score": self._grade_result.final_score,
                     "breakdown": self._grade_result.breakdown
                 }
-            return self._build_observation(done=True), Reward(value=0.0), True, info
+            return self._build_observation(done=True), 0.0, True, info
         
-        # Validate action is an Action model
-        if not isinstance(action, Action):
-            if isinstance(action, dict):
-                action = Action(**action)
-            else:
-                raise TypeError(f"Expected Action or dict, got {type(action)}")
+        # Extract action type from action metadata
+        action_metadata = action.metadata if action.metadata else {}
+        action_type = action_metadata.get("action_type", "")
+        params = action_metadata.get("params", {})
         
         # Increment step count
         self._step_count += 1
         
         # Check for submit action
-        if action.action_type == "submit":
+        if action_type == "submit":
             return self._handle_submit()
         
         # Check for revert action
-        if action.action_type == "revert":
+        if action_type == "revert":
             return self._handle_revert()
         
         # Execute action through engine
         try:
             result = self._action_engine.execute_action(
-                action_type=action.action_type,
-                params=action.params
+                action_type=action_type,
+                params=params
             )
         except ActionValidationError as e:
-            reward = Reward.create(quality=0.0, progress=0.0, penalty=0.2)
+            reward = -0.2  # Penalty for invalid action
             observation = self._build_observation(
-                message=f"Action validation failed: {str(e)}"
+                message=f"Action validation failed: {str(e)}",
+                done=False
             )
             info = {"error": str(e), "action_result": None}
             return observation, reward, False, info
         
         except ActionExecutionError as e:
-            reward = Reward.create(quality=0.0, progress=0.0, penalty=0.1)
+            reward = -0.1  # Penalty for execution error
             observation = self._build_observation(
-                message=f"Action execution failed: {str(e)}"
+                message=f"Action execution failed: {str(e)}",
+                done=False
             )
             info = {"error": str(e), "action_result": None}
             return observation, reward, False, info
         
         # Calculate reward
-        reward = self._reward_calculator.calculate(
-            action_type=action.action_type,
-            params=action.params,
+        reward_obj = self._reward_calculator.calculate(
+            action_type=action_type,
+            params=params,
             current_dataset=self._action_engine.dataset,
             step_count=self._step_count
         )
+        reward = reward_obj.value
         
         # Build observation
         observation = self._build_observation(
-            message=f"Action '{action.action_type}' executed successfully"
+            message=f"Action '{action_type}' executed successfully",
+            done=False
         )
         
         # Build info dict
         info = {
             "action_result": result,
             "step": self._step_count,
-            "action_type": action.action_type
+            "action_type": action_type,
+            "reward_components": reward_obj.components
         }
         
         logger.info(
-            f"Step {self._step_count}: {action.action_type} -> "
-            f"reward={reward.value:.4f}"
+            f"Step {self._step_count}: {action_type} -> "
+            f"reward={reward:.4f}"
         )
         
         return observation, reward, False, info
 
-    def state(self) -> EnvState:
+    def state(self) -> State:
         """
         Return current environment state.
         OpenEnv lifecycle method.
         
         Returns:
-            EnvState: Current state snapshot
+            State: Current state snapshot
         """
-        dataset_hash = None
-        if self._dataset is not None:
-            dataset_hash = str(hash(self._dataset.to_string()))
+        dataset_info = {}
+        if self._action_engine.dataset is not None:
+            dataset_info = {
+                "shape": list(self._action_engine.dataset.shape),
+                "columns": self._action_engine.dataset.columns.tolist(),
+                "null_counts": {
+                    col: int(self._action_engine.dataset[col].isnull().sum())
+                    for col in self._action_engine.dataset.columns
+                }
+            }
         
-        return EnvState(
-            session_id=self._session_id or "",
-            task_id=self._task_id,
-            step_count=self._step_count,
-            action_history=self._action_engine.action_history,
-            dataset_hash=dataset_hash,
+        return State(
             done=self._done,
-            grade=self._grade_result
+            reward=None,
+            metadata={
+                "session_id": self._session_id or "",
+                "task_id": self._task_id,
+                "step_count": self._step_count,
+                "action_history": self._action_engine.action_history,
+                "dataset_info": dataset_info,
+                "grade": self._grade_result.model_dump() if self._grade_result else None
+            }
         )
+
+    def get_metadata(self) -> Dict[str, Any]:
+        """Get environment metadata."""
+        return {
+            "name": "openenv-datacleaner",
+            "version": "1.0.0",
+            "tasks": get_tasks(),
+            "available_actions": self._action_engine.get_available_actions()
+        }
 
     # ============================================================
     # Internal Methods
@@ -304,30 +326,33 @@ class DataCleaningEnv(BaseEnv):
     ) -> Observation:
         """Build an Observation from current state."""
         dataset_info = {}
-        if self._dataset is not None:
+        if self._action_engine.dataset is not None:
             dataset_info = {
-                "shape": list(self._dataset.shape),
-                "columns": self._dataset.columns.tolist(),
+                "shape": list(self._action_engine.dataset.shape),
+                "columns": self._action_engine.dataset.columns.tolist(),
                 "null_counts": {
-                    col: int(self._dataset[col].isnull().sum())
-                    for col in self._dataset.columns
+                    col: int(self._action_engine.dataset[col].isnull().sum())
+                    for col in self._action_engine.dataset.columns
                 },
                 "dtypes": {
                     col: str(dtype)
-                    for col, dtype in self._dataset.dtypes.items()
+                    for col, dtype in self._action_engine.dataset.dtypes.items()
                 }
             }
         
         return Observation(
-            dataset_info=dataset_info,
-            available_actions=self._action_engine.get_available_actions() + ["submit", "revert"],
-            step_count=self._step_count,
-            task_id=self._task_id,
-            message=message,
-            done=done or self._done
+            done=done or self._done,
+            reward=None,
+            metadata={
+                "dataset_info": dataset_info,
+                "available_actions": self._action_engine.get_available_actions() + ["submit", "revert"],
+                "step_count": self._step_count,
+                "task_id": self._task_id,
+                "message": message
+            }
         )
 
-    def _handle_submit(self) -> Tuple[Observation, Reward, bool, Dict[str, Any]]:
+    def _handle_submit(self) -> Tuple[Observation, float, bool, Dict[str, Any]]:
         """Handle submit action - grade the solution."""
         self._done = True
         
@@ -342,13 +367,14 @@ class DataCleaningEnv(BaseEnv):
         self._grade_result = self._grader.grade()
         
         # Calculate terminal reward
-        reward = self._reward_calculator.calculate_terminal_reward(
+        reward_obj = self._reward_calculator.calculate_terminal_reward(
             current_dataset=self._action_engine.dataset,
             grade_result={
                 "final_score": self._grade_result.final_score,
                 "breakdown": self._grade_result.breakdown
             }
         )
+        reward = reward_obj.value
         
         observation = self._build_observation(
             message=f"Submitted! Score: {self._grade_result.final_score:.2f}",
@@ -361,7 +387,8 @@ class DataCleaningEnv(BaseEnv):
                 "breakdown": self._grade_result.breakdown
             },
             "feedback": self._grade_result.feedback,
-            "action_history": self._action_engine.action_history
+            "action_history": self._action_engine.action_history,
+            "reward_components": reward_obj.components
         }
         
         logger.info(
@@ -371,20 +398,22 @@ class DataCleaningEnv(BaseEnv):
         
         return observation, reward, True, info
 
-    def _handle_revert(self) -> Tuple[Observation, Reward, bool, Dict[str, Any]]:
+    def _handle_revert(self) -> Tuple[Observation, float, bool, Dict[str, Any]]:
         """Handle revert action - undo last action."""
         reverted = self._action_engine.revert_last_action()
         
         if reverted:
-            reward = Reward.create(quality=0.0, progress=0.0, penalty=0.05)
+            reward = -0.05  # Small penalty for reverting
             observation = self._build_observation(
-                message="Last action reverted"
+                message="Last action reverted",
+                done=False
             )
             info = {"message": "Last action reverted"}
         else:
-            reward = Reward.create(quality=0.0, progress=0.0, penalty=0.0)
+            reward = 0.0
             observation = self._build_observation(
-                message="Nothing to revert"
+                message="Nothing to revert",
+                done=False
             )
             info = {"message": "No actions to revert"}
         

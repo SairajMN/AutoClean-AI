@@ -15,9 +15,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from openenv.core import Action
+
 # Import OpenEnv-compliant environment
 from env.datacleaner_env import DataCleaningEnv
-from env.models import Action, Observation, Reward
 from env.tasks import get_tasks, get_all_task_configs
 
 # Configure logging
@@ -105,7 +106,7 @@ async def health_check():
         "session_id": openenv_env.get_session_id() if openenv_env else None,
         "task_id": openenv_env.get_task_id() if openenv_env else None,
         "uptime_seconds": round(uptime, 2),
-        "step_count": openenv_env.state().step_count if openenv_env else 0,
+        "step_count": openenv_env.state().metadata.get("step_count", 0) if openenv_env else 0,
         "done": openenv_env.is_done() if openenv_env else False,
         "timestamp": datetime.utcnow().isoformat()
     }
@@ -131,7 +132,7 @@ async def reset_environment(request: ResetRequest):
         
         return {
             "status": "reset_complete",
-            "observation": observation.model_dump(),
+            "observation": observation.metadata,
             "session_id": openenv_env.get_session_id(),
             "task_id": openenv_env.get_task_id()
         }
@@ -153,11 +154,12 @@ async def execute_step(request: StepRequest):
         raise HTTPException(status_code=503, detail="Environment not initialized")
     
     try:
-        # Create Action model
+        # Create OpenEnv Action with metadata
         action = Action(
-            action_type=request.action_type,
-            params=request.params,
-            task_id=openenv_env.get_task_id()
+            metadata={
+                "action_type": request.action_type,
+                "params": request.params
+            }
         )
         
         logger.info(f"Executing step: {request.action_type}")
@@ -167,8 +169,8 @@ async def execute_step(request: StepRequest):
         
         return {
             "status": "success",
-            "observation": observation.model_dump(),
-            "reward": reward.model_dump(),
+            "observation": observation.metadata,
+            "reward": reward,
             "done": done,
             "info": info
         }
@@ -217,7 +219,11 @@ async def get_state():
         raise HTTPException(status_code=503, detail="Environment not initialized")
     
     state = openenv_env.state()
-    return state.model_dump()
+    return {
+        "done": state.done,
+        "reward": state.reward,
+        "metadata": state.metadata
+    }
 
 
 @app.get("/dataset")
@@ -243,7 +249,7 @@ async def get_dataset_info():
             col: str(dtype)
             for col, dtype in dataset.dtypes.items()
         },
-        "step_count": openenv_env.state().step_count
+        "step_count": openenv_env.state().metadata.get("step_count", 0)
     }
 
 
@@ -253,12 +259,13 @@ async def get_history():
     if openenv_env is None:
         raise HTTPException(status_code=503, detail="Environment not initialized")
     
+    state = openenv_env.state()
     return {
         "session_id": openenv_env.get_session_id(),
         "task_id": openenv_env.get_task_id(),
-        "step_count": openenv_env.state().step_count,
+        "step_count": state.metadata.get("step_count", 0),
         "done": openenv_env.is_done(),
-        "history": openenv_env.get_action_history()
+        "history": state.metadata.get("action_history", [])
     }
 
 
@@ -270,17 +277,18 @@ async def revert_last_action():
     
     # Create revert action
     action = Action(
-        action_type="revert",
-        params={},
-        task_id=openenv_env.get_task_id()
+        metadata={
+            "action_type": "revert",
+            "params": {}
+        }
     )
     
     observation, reward, done, info = openenv_env.step(action)
     
     return {
         "status": "reverted",
-        "observation": observation.model_dump(),
-        "reward": reward.model_dump(),
+        "observation": observation.metadata,
+        "reward": reward,
         "info": info
     }
 
@@ -293,17 +301,18 @@ async def submit_solution():
     
     # Create submit action
     action = Action(
-        action_type="submit",
-        params={},
-        task_id=openenv_env.get_task_id()
+        metadata={
+            "action_type": "submit",
+            "params": {}
+        }
     )
     
     observation, reward, done, info = openenv_env.step(action)
     
     return {
         "status": "submitted",
-        "observation": observation.model_dump(),
-        "reward": reward.model_dump(),
+        "observation": observation.metadata,
+        "reward": reward,
         "done": done,
         "info": info
     }
