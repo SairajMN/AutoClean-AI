@@ -16,7 +16,7 @@ logger = logging.getLogger("openenv-datacleaner.reward")
 
 class RewardCalculator:
     """
-    Calculates structured rewards for data cleaning actions.
+    Calculates rewards for data cleaning actions.
     Reward = quality + progress - penalty
     """
 

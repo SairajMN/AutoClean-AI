@@ -1,15 +1,43 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the BSD-style license found in the
+# LICENSE file in the root directory of this source tree.
+
 """
-OpenEnv Data Cleaning Environment - Pydantic Data Models
-Strict typing for actions, observations, rewards, and task configurations.
+Data models for the Env Environment.
+
+The env environment is a simple test environment that echoes back messages.
+Also includes data cleaning environment models from testenv.
 """
 
 from typing import Optional, Dict, Any, List
+
+from openenv.core.env_server.types import Action as BaseAction, Observation as BaseObservation
 from pydantic import BaseModel, Field
+
+
+class EnvAction(BaseAction):
+    """Action for the Env environment - just a message to echo."""
+
+    message: str = Field(..., description="Message to echo back")
+
+
+class EnvObservation(BaseObservation):
+    """Observation from the Env environment - the echoed message."""
+
+    echoed_message: str = Field(default="", description="The echoed message")
+    message_length: int = Field(default=0, description="Length of the echoed message")
+
+
+# ============================================================
+# Data Cleaning Environment Models (from testenv)
+# ============================================================
 
 
 class Action(BaseModel):
     """
-    OpenEnv-compliant action model.
+    OpenEnv-compliant action model for data cleaning.
     Represents a single action to be executed in the environment.
     """
     action_type: str = Field(
@@ -32,7 +60,7 @@ class Action(BaseModel):
 
 class Observation(BaseModel):
     """
-    OpenEnv-compliant observation model.
+    OpenEnv-compliant observation model for data cleaning.
     Represents the state observation returned after reset or step.
     """
     dataset_info: Dict[str, Any] = Field(
