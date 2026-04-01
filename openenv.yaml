@@ -1,0 +1,53 @@
+name: openenv-datacleaner
+version: "1.0.0"
+description: OpenEnv-compliant AI-powered data cleaning environment for Hugging Face Spaces
+
+# OpenEnv configuration
+framework: openenv
+entrypoint: app.py
+
+# Environment configuration
+environment:
+  type: docker
+  port: 7860
+  base_image: python:3.10-slim
+
+# Server configuration
+server:
+  host: "0.0.0.0"
+  port: 7860
+  workers: 1
+  log_level: info
+
+# OpenEnv tasks
+tasks:
+  - easy_001
+  - medium_001
+  - hard_001
+
+# Endpoints
+endpoints:
+  health:
+    path: /health
+    method: GET
+  reset:
+    path: /reset
+    method: POST
+  step:
+    path: /step
+    method: POST
+  tasks:
+    path: /tasks
+    method: GET
+  state:
+    path: /state
+    method: GET
+  submit:
+    path: /submit
+    method: POST
+
+# Deployment
+deployment:
+  platform: huggingface_spaces
+  sdk: docker
+  auto_build: true
