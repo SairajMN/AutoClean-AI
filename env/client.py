@@ -1,99 +1,52 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
-#
-# This source code is licensed under the BSD-style license found in the
-# LICENSE file in the root directory of this source tree.
+"""OpenEnv Data Cleaning Environment Client."""
 
-"""Env Environment Client."""
+from typing import Dict, Any, Optional
 
-from typing import Dict
-
-from openenv.core import EnvClient
+from openenv.core import EnvClient, SyncEnvClient
 from openenv.core.client_types import StepResult
 from openenv.core.env_server.types import State
 
-from .models import EnvAction, EnvObservation
+from .models import DataCleaningAction, DataCleaningObservation, DataCleaningState
 
 
-class EnvEnv(
-    EnvClient[EnvAction, EnvObservation, State]
-):
+class DataCleaningClient(EnvClient[DataCleaningAction, DataCleaningObservation, DataCleaningState]):
     """
-    Client for the Env Environment.
-
-    This client maintains a persistent WebSocket connection to the environment server,
-    enabling efficient multi-step interactions with lower latency.
-    Each client instance has its own dedicated environment session on the server.
-
+    Client for the Data Cleaning Environment.
+    
     Example:
-        >>> # Connect to a running server
-        >>> with EnvEnv(base_url="http://localhost:8000") as client:
-        ...     result = client.reset()
-        ...     print(result.observation.echoed_message)
-        ...
-        ...     result = client.step(EnvAction(message="Hello!"))
-        ...     print(result.observation.echoed_message)
-
-    Example with Docker:
-        >>> # Automatically start container and connect
-        >>> client = EnvEnv.from_docker_image("env-env:latest")
-        >>> try:
-        ...     result = client.reset()
-        ...     result = client.step(EnvAction(message="Test"))
-        ... finally:
-        ...     client.close()
+        >>> with DataCleaningClient(base_url="http://localhost:7860") as client:
+        ...     result = client.reset(task_id="easy_001")
+        ...     print(result.observation.metadata.get("message"))
     """
 
-    def _step_payload(self, action: EnvAction) -> Dict:
-        """
-        Convert EnvAction to JSON payload for step message.
-
-        Args:
-            action: EnvAction instance
-
-        Returns:
-            Dictionary representation suitable for JSON encoding
-        """
+    def _step_payload(self, action: DataCleaningAction) -> Dict[str, Any]:
+        """Convert DataCleaningAction to JSON payload."""
         return {
-            "message": action.message,
+            "action_type": action.action_type,
+            "params": action.params,
         }
 
-    def _parse_result(self, payload: Dict) -> StepResult[EnvObservation]:
-        """
-        Parse server response into StepResult[EnvObservation].
-
-        Args:
-            payload: JSON response data from server
-
-        Returns:
-            StepResult with EnvObservation
-        """
+    def _parse_result(self, payload: Dict[str, Any]) -> StepResult[DataCleaningObservation]:
+        """Parse server response into StepResult."""
         obs_data = payload.get("observation", {})
-        observation = EnvObservation(
-            echoed_message=obs_data.get("echoed_message", ""),
-            message_length=obs_data.get("message_length", 0),
+        observation = DataCleaningObservation(
             done=payload.get("done", False),
             reward=payload.get("reward"),
-            metadata=obs_data.get("metadata", {}),
+            metadata=obs_data,
         )
-
         return StepResult(
             observation=observation,
             reward=payload.get("reward"),
             done=payload.get("done", False),
         )
 
-    def _parse_state(self, payload: Dict) -> State:
-        """
-        Parse server response into State object.
-
-        Args:
-            payload: JSON response from state request
-
-        Returns:
-            State object with episode_id and step_count
-        """
-        return State(
+    def _parse_state(self, payload: Dict[str, Any]) -> DataCleaningState:
+        """Parse server response into State object."""
+        return DataCleaningState(
             episode_id=payload.get("episode_id"),
             step_count=payload.get("step_count", 0),
+            session_id=payload.get("session_id", ""),
+            task_id=payload.get("task_id"),
+            action_history=payload.get("action_history", []),
+            grade=payload.get("grade"),
         )

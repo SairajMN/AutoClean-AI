@@ -1,16 +1,7 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
-#
-# This source code is licensed under the BSD-style license found in the
-# LICENSE file in the root directory of this source tree.
+"""OpenEnv Data Cleaning Environment."""
 
-"""Env Environment."""
-
-from .client import EnvEnv
-from .models import EnvAction, EnvObservation
-
-# Data Cleaning Environment exports
 from .datacleaner_env import DataCleaningEnv
+from .client import DataCleaningClient
 from .models import (
     DataCleaningAction,
     DataCleaningObservation,
@@ -21,12 +12,8 @@ from .models import (
 )
 
 __all__ = [
-    # Original Env
-    "EnvAction",
-    "EnvObservation",
-    "EnvEnv",
-    # Data Cleaning Environment
     "DataCleaningEnv",
+    "DataCleaningClient",
     "DataCleaningAction",
     "DataCleaningObservation",
     "DataCleaningState",
