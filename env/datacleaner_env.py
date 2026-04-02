@@ -5,14 +5,20 @@ Extends Environment from openenv-core for full OpenEnv lifecycle compliance.
 
 import logging
 import uuid
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Optional, Dict, Any, List
 
 import pandas as pd
 import numpy as np
 
 from openenv.core import Environment, Action, Observation, State
 
-from env.models import Reward, EnvState, GradeResult
+from env.models import (
+    DataCleaningAction,
+    DataCleaningObservation,
+    DataCleaningState,
+    Reward,
+    GradeResult,
+)
 from env.action_engine import ActionEngine, ActionValidationError, ActionExecutionError
 from env.tasks import get_task_config, get_tasks
 from env.grader import Grader
@@ -26,12 +32,14 @@ class DataCleaningEnv(Environment):
     OpenEnv-compliant Data Cleaning Environment.
     
     Implements the full OpenEnv lifecycle:
-    - reset(task_id, session_id): Initialize environment for a task
-    - step(action): Execute an action and return (observation, reward, done, info)
-    - state(): Return current environment state
+    - reset(seed, episode_id): Initialize environment for a task
+    - step(action): Execute an action and return observation
+    - state: Return current environment state
     
     This environment is deterministic and production-ready.
     """
+
+    SUPPORTS_CONCURRENT_SESSIONS: bool = True
 
     def __init__(self):
         """Initialize the DataCleaningEnv."""
@@ -48,6 +56,7 @@ class DataCleaningEnv(Environment):
         self._step_count: int = 0
         self._done: bool = False
         self._grade_result: Optional[GradeResult] = None
+        self._episode_id: Optional[str] = None
         
         # Dataset storage
         self._dataset: Optional[pd.DataFrame] = None
@@ -57,21 +66,30 @@ class DataCleaningEnv(Environment):
 
     def reset(
         self,
-        task_id: str = "easy_001",
-        session_id: Optional[str] = None
-    ) -> Observation:
+        seed: Optional[int] = None,
+        episode_id: Optional[str] = None,
+        **kwargs: Any,
+    ) -> DataCleaningObservation:
         """
         Reset environment and initialize a new task.
         OpenEnv lifecycle method.
         
         Args:
-            task_id: Task identifier (e.g., "easy_001", "medium_001", "hard_001")
-            session_id: Optional session ID (auto-generated if not provided)
+            seed: Optional seed for deterministic behavior
+            episode_id: Optional episode identifier
+            **kwargs: Additional arguments (task_id, session_id)
             
         Returns:
-            Observation: Initial observation with dataset info
+            DataCleaningObservation: Initial observation with dataset info
         """
-        logger.info(f"Resetting environment: task_id={task_id}, session_id={session_id}")
+        task_id = kwargs.get("task_id", "easy_001")
+        session_id = kwargs.get("session_id", str(uuid.uuid4()))
+        
+        logger.info(f"Resetting environment: task_id={task_id}, episode_id={episode_id}")
+        
+        # Set seed if provided
+        if seed is not None:
+            np.random.seed(seed)
         
         # Validate task
         available_tasks = get_tasks()
@@ -82,7 +100,8 @@ class DataCleaningEnv(Environment):
         
         # Reset state
         self._task_id = task_id
-        self._session_id = session_id or str(uuid.uuid4())
+        self._session_id = session_id
+        self._episode_id = episode_id or str(uuid.uuid4())
         self._step_count = 0
         self._done = False
         self._grade_result = None
@@ -108,32 +127,38 @@ class DataCleaningEnv(Environment):
         )
         
         logger.info(
-            f"Environment reset complete. Session: {self._session_id}, "
+            f"Environment reset complete. Episode: {self._episode_id}, "
             f"Task: {task_id}, Dataset shape: {self._dataset.shape}"
         )
         
         return observation
 
-    def step(self, action: Action) -> Tuple[Observation, float, bool, Dict[str, Any]]:
+    def step(
+        self,
+        action: Action,
+        timeout_s: Optional[float] = None,
+        **kwargs: Any,
+    ) -> DataCleaningObservation:
         """
-        Execute an action in the environment.
+        Take a step in the environment.
         OpenEnv lifecycle method.
         
         Args:
-            action: Action to execute
+            action: Action to execute (DataCleaningAction)
+            timeout_s: Optional timeout
+            **kwargs: Additional arguments
             
         Returns:
-            Tuple of (observation, reward, done, info)
+            DataCleaningObservation with reward and done status
         """
         # Check if episode is done
         if self._done:
-            info = {"message": "Episode is done. Reset to start a new episode."}
-            if self._grade_result:
-                info["grade"] = {
-                    "final_score": self._grade_result.final_score,
-                    "breakdown": self._grade_result.breakdown
-                }
-            return self._build_observation(done=True), 0.0, True, info
+            obs = self._build_observation(
+                message="Episode is done. Reset to start a new episode.",
+                done=True
+            )
+            obs.reward = 0.0
+            return obs
         
         # Extract action type from action metadata
         action_metadata = action.metadata if action.metadata else {}
@@ -158,22 +183,20 @@ class DataCleaningEnv(Environment):
                 params=params
             )
         except ActionValidationError as e:
-            reward = -0.2  # Penalty for invalid action
             observation = self._build_observation(
                 message=f"Action validation failed: {str(e)}",
                 done=False
             )
-            info = {"error": str(e), "action_result": None}
-            return observation, reward, False, info
+            observation.reward = -0.2  # Penalty for invalid action
+            return observation
         
         except ActionExecutionError as e:
-            reward = -0.1  # Penalty for execution error
             observation = self._build_observation(
                 message=f"Action execution failed: {str(e)}",
                 done=False
             )
-            info = {"error": str(e), "action_result": None}
-            return observation, reward, False, info
+            observation.reward = -0.1  # Penalty for execution error
+            return observation
         
         # Calculate reward
         reward_obj = self._reward_calculator.calculate(
@@ -182,36 +205,29 @@ class DataCleaningEnv(Environment):
             current_dataset=self._action_engine.dataset,
             step_count=self._step_count
         )
-        reward = reward_obj.value
         
         # Build observation
         observation = self._build_observation(
             message=f"Action '{action_type}' executed successfully",
             done=False
         )
-        
-        # Build info dict
-        info = {
-            "action_result": result,
-            "step": self._step_count,
-            "action_type": action_type,
-            "reward_components": reward_obj.components
-        }
+        observation.reward = reward_obj.value
         
         logger.info(
             f"Step {self._step_count}: {action_type} -> "
-            f"reward={reward:.4f}"
+            f"reward={reward_obj.value:.4f}"
         )
         
-        return observation, reward, False, info
+        return observation
 
-    def state(self) -> State:
+    @property
+    def state(self) -> DataCleaningState:
         """
-        Return current environment state.
+        Get the current environment state.
         OpenEnv lifecycle method.
         
         Returns:
-            State: Current state snapshot
+            DataCleaningState: Current state snapshot
         """
         dataset_info = {}
         if self._action_engine.dataset is not None:
@@ -224,17 +240,13 @@ class DataCleaningEnv(Environment):
                 }
             }
         
-        return State(
-            done=self._done,
-            reward=None,
-            metadata={
-                "session_id": self._session_id or "",
-                "task_id": self._task_id,
-                "step_count": self._step_count,
-                "action_history": self._action_engine.action_history,
-                "dataset_info": dataset_info,
-                "grade": self._grade_result.model_dump() if self._grade_result else None
-            }
+        return DataCleaningState(
+            episode_id=self._episode_id,
+            step_count=self._step_count,
+            session_id=self._session_id or "",
+            task_id=self._task_id,
+            action_history=self._action_engine.action_history,
+            grade=self._grade_result.model_dump() if self._grade_result else None
         )
 
     def get_metadata(self) -> Dict[str, Any]:
@@ -323,8 +335,8 @@ class DataCleaningEnv(Environment):
         self,
         message: str = "",
         done: bool = False
-    ) -> Observation:
-        """Build an Observation from current state."""
+    ) -> DataCleaningObservation:
+        """Build a DataCleaningObservation from current state."""
         dataset_info = {}
         if self._action_engine.dataset is not None:
             dataset_info = {
@@ -340,7 +352,7 @@ class DataCleaningEnv(Environment):
                 }
             }
         
-        return Observation(
+        return DataCleaningObservation(
             done=done or self._done,
             reward=None,
             metadata={
@@ -352,7 +364,7 @@ class DataCleaningEnv(Environment):
             }
         )
 
-    def _handle_submit(self) -> Tuple[Observation, float, bool, Dict[str, Any]]:
+    def _handle_submit(self) -> DataCleaningObservation:
         """Handle submit action - grade the solution."""
         self._done = True
         
@@ -374,50 +386,31 @@ class DataCleaningEnv(Environment):
                 "breakdown": self._grade_result.breakdown
             }
         )
-        reward = reward_obj.value
         
         observation = self._build_observation(
             message=f"Submitted! Score: {self._grade_result.final_score:.2f}",
             done=True
         )
-        
-        info = {
-            "grade": {
-                "final_score": self._grade_result.final_score,
-                "breakdown": self._grade_result.breakdown
-            },
-            "feedback": self._grade_result.feedback,
-            "action_history": self._action_engine.action_history,
-            "reward_components": reward_obj.components
-        }
+        observation.reward = reward_obj.value
         
         logger.info(
             f"Submitted! Task: {self._task_id}, "
             f"Score: {self._grade_result.final_score:.4f}"
         )
         
-        return observation, reward, True, info
+        return observation
 
-    def _handle_revert(self) -> Tuple[Observation, float, bool, Dict[str, Any]]:
+    def _handle_revert(self) -> DataCleaningObservation:
         """Handle revert action - undo last action."""
         reverted = self._action_engine.revert_last_action()
         
-        if reverted:
-            reward = -0.05  # Small penalty for reverting
-            observation = self._build_observation(
-                message="Last action reverted",
-                done=False
-            )
-            info = {"message": "Last action reverted"}
-        else:
-            reward = 0.0
-            observation = self._build_observation(
-                message="Nothing to revert",
-                done=False
-            )
-            info = {"message": "No actions to revert"}
+        observation = self._build_observation(
+            message="Last action reverted" if reverted else "Nothing to revert",
+            done=False
+        )
+        observation.reward = -0.05 if reverted else 0.0
         
-        return observation, reward, False, info
+        return observation
 
     # ============================================================
     # Utility Methods

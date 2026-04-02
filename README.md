@@ -74,5 +74,3 @@ Built with `openenv-core` for full compatibility.
 - **env/grader.py**: Task-specific grading with deterministic scoring
 - **env/reward.py**: Structured reward system (quality + progress - penalty)
 - **env/tasks.py**: Task definitions with dataset configurations
-- **env/models.py**: Pydantic models for Action, Observation, Reward
-- **app.py**: FastAPI thin wrapper over OpenEnv environment

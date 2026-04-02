@@ -5,25 +5,28 @@
 # LICENSE file in the root directory of this source tree.
 
 """
-Data models for the Env Environment.
-
-The env environment is a simple test environment that echoes back messages.
-Also includes data cleaning environment models from testenv.
+Data models for the Data Cleaning Environment.
+Uses openenv-core base classes for Action, Observation, and State.
 """
 
 from typing import Optional, Dict, Any, List
 
-from openenv.core.env_server.types import Action as BaseAction, Observation as BaseObservation
+from openenv.core import Action, Observation, State
 from pydantic import BaseModel, Field
 
 
-class EnvAction(BaseAction):
+# ============================================================
+# Original Env Environment Models
+# ============================================================
+
+
+class EnvAction(Action):
     """Action for the Env environment - just a message to echo."""
 
-    message: str = Field(..., description="Message to echo back")
+    message: str = Field(default="", description="Message to echo back")
 
 
-class EnvObservation(BaseObservation):
+class EnvObservation(Observation):
     """Observation from the Env environment - the echoed message."""
 
     echoed_message: str = Field(default="", description="The echoed message")
@@ -31,17 +34,17 @@ class EnvObservation(BaseObservation):
 
 
 # ============================================================
-# Data Cleaning Environment Models (from testenv)
+# Data Cleaning Environment Models
 # ============================================================
 
 
-class Action(BaseModel):
+class DataCleaningAction(Action):
     """
     OpenEnv-compliant action model for data cleaning.
     Represents a single action to be executed in the environment.
     """
     action_type: str = Field(
-        ...,
+        default="",
         description="Type of action to execute (e.g., 'drop_nulls', 'fill_nulls')"
     )
     params: Dict[str, Any] = Field(
@@ -53,12 +56,8 @@ class Action(BaseModel):
         description="Associated task ID"
     )
 
-    class Config:
-        frozen = False
-        extra = "forbid"
 
-
-class Observation(BaseModel):
+class DataCleaningObservation(Observation):
     """
     OpenEnv-compliant observation model for data cleaning.
     Represents the state observation returned after reset or step.
@@ -83,18 +82,26 @@ class Observation(BaseModel):
         default="",
         description="Status message"
     )
-    done: bool = Field(
-        default=False,
-        description="Whether the task is complete"
-    )
 
-    class Config:
-        frozen = False
+
+class DataCleaningState(State):
+    """
+    Complete environment state for serialization.
+    """
+    session_id: str = Field(default="")
+    task_id: Optional[str] = Field(default=None)
+    action_history: List[Dict[str, Any]] = Field(default_factory=list)
+    dataset_hash: Optional[str] = Field(default=None)
+    grade: Optional[Dict[str, Any]] = Field(default=None)
+
+
+# ============================================================
+# Supporting Data Models (not inheriting from openenv-core)
+# ============================================================
 
 
 class Reward(BaseModel):
     """
-    OpenEnv-compliant reward model.
     Structured reward with components for quality, progress, and penalties.
     """
     value: float = Field(
@@ -105,9 +112,6 @@ class Reward(BaseModel):
         default_factory=dict,
         description="Breakdown of reward components"
     )
-
-    class Config:
-        frozen = False
 
     @classmethod
     def create(
@@ -157,9 +161,6 @@ class TaskConfig(BaseModel):
         description="Criteria for grading the task"
     )
 
-    class Config:
-        frozen = False
-
 
 class GradeResult(BaseModel):
     """
@@ -177,22 +178,3 @@ class GradeResult(BaseModel):
         default="",
         description="Feedback on the solution"
     )
-
-    class Config:
-        frozen = False
-
-
-class EnvState(BaseModel):
-    """
-    Complete environment state for serialization.
-    """
-    session_id: str = Field(default="")
-    task_id: Optional[str] = Field(default=None)
-    step_count: int = Field(default=0)
-    action_history: List[Dict[str, Any]] = Field(default_factory=list)
-    dataset_hash: Optional[str] = Field(default=None)
-    done: bool = Field(default=False)
-    grade: Optional[GradeResult] = Field(default=None)
-
-    class Config:
-        frozen = False

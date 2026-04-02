@@ -9,9 +9,16 @@
 from .client import EnvEnv
 from .models import EnvAction, EnvObservation
 
-# Data Cleaning Environment exports (from testenv)
+# Data Cleaning Environment exports
 from .datacleaner_env import DataCleaningEnv
-from .models import Action, Observation, Reward, TaskConfig
+from .models import (
+    DataCleaningAction,
+    DataCleaningObservation,
+    DataCleaningState,
+    Reward,
+    TaskConfig,
+    GradeResult,
+)
 
 __all__ = [
     # Original Env
@@ -20,8 +27,10 @@ __all__ = [
     "EnvEnv",
     # Data Cleaning Environment
     "DataCleaningEnv",
-    "Action",
-    "Observation",
+    "DataCleaningAction",
+    "DataCleaningObservation",
+    "DataCleaningState",
     "Reward",
     "TaskConfig",
+    "GradeResult",
 ]
