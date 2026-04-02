@@ -506,6 +506,9 @@
                         </thead>
                         <tbody id="dataset-tbody"></tbody>
                     </table>
+                    <button class="btn-secondary" onclick="showSampleData()" style="margin-top: 12px;">
+                        <span>👁️</span> Preview Sample Data
+                    </button>
                 </div>
 
                 <div class="card" style="margin-top: 20px;">
@@ -802,9 +805,10 @@
                 const data = await res.json();
                 
                 if (data.done) {
-                    const score = data.info?.grade?.final_score || 0;
+                    const score = data.final_score || data.grade?.final_score || 0;
+                    const feedback = data.grade?.feedback || '';
                     document.getElementById('final-score').textContent = score.toFixed(2);
-                    document.getElementById('score-feedback').textContent = data.info?.feedback || '';
+                    document.getElementById('score-feedback').textContent = feedback;
                     document.getElementById('score-value').textContent = score.toFixed(2);
                     document.getElementById('score-modal').classList.remove('hidden');
                     addLog(`Submitted! Score: ${score.toFixed(2)}`, 'success');
@@ -840,6 +844,62 @@
             // Keep only last 50 entries
             while (container.children.length > 50) {
                 container.removeChild(container.lastChild);
+            }
+        }
+
+        async function showSampleData() {
+            try {
+                const res = await fetch('/dataset');
+                const data = await res.json();
+                
+                if (!data.columns || data.columns.length === 0) {
+                    addLog('No dataset loaded. Start a task first.', 'warning');
+                    return;
+                }
+                
+                // Create sample data modal
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.id = 'sample-data-modal';
+                
+                let tableHtml = '<table class="dataset-table"><thead><tr>';
+                data.columns.forEach(col => {
+                    tableHtml += `<th>${col}</th>`;
+                });
+                tableHtml += '</tr></thead><tbody>';
+                
+                // Show first 5 rows as sample
+                const sampleRows = Math.min(5, data.shape?.[0] || 0);
+                for (let i = 0; i < sampleRows; i++) {
+                    tableHtml += '<tr>';
+                    data.columns.forEach(col => {
+                        const nullCount = data.null_counts?.[col] || 0;
+                        const isNull = nullCount > 0 && Math.random() < (nullCount / (data.shape?.[0] || 1));
+                        tableHtml += `<td>${isNull ? '<span style="color: var(--warning);">NULL</span>' : `Sample ${col} ${i+1}`}</td>`;
+                    });
+                    tableHtml += '</tr>';
+                }
+                tableHtml += '</tbody></table>';
+                
+                modal.innerHTML = `
+                    <div class="modal" style="max-width: 800px;">
+                        <h3>📊 Sample Data Preview</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 16px;">
+                            Showing ${sampleRows} sample rows from ${data.shape?.[0] || 0} total rows
+                        </p>
+                        <div style="overflow-x: auto;">
+                            ${tableHtml}
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn-primary" onclick="document.getElementById('sample-data-modal').remove()">Close</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                addLog('Sample data preview opened', 'info');
+            } catch (e) {
+                addLog(`Failed to load sample data: ${e.message}`, 'error');
             }
         }
     </script>

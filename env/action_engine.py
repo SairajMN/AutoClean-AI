@@ -214,9 +214,11 @@ class ActionEngine:
             if null_count == 0:
                 continue
 
-            if strategy == "mean" and pd.api.types.is_numeric_dtype(self._dataset[col]):
+            is_numeric = pd.api.types.is_numeric_dtype(self._dataset[col])
+            
+            if strategy == "mean" and is_numeric:
                 self._dataset[col] = self._dataset[col].fillna(self._dataset[col].mean())
-            elif strategy == "median" and pd.api.types.is_numeric_dtype(self._dataset[col]):
+            elif strategy == "median" and is_numeric:
                 self._dataset[col] = self._dataset[col].fillna(self._dataset[col].median())
             elif strategy == "mode":
                 mode_val = self._dataset[col].mode()
@@ -229,7 +231,13 @@ class ActionEngine:
             elif strategy == "backward_fill":
                 self._dataset[col] = self._dataset[col].bfill()
             else:
-                self._dataset[col] = self._dataset[col].fillna("")
+                # For non-numeric columns with mean/median, use mode instead
+                if not is_numeric and strategy in ("mean", "median"):
+                    mode_val = self._dataset[col].mode()
+                    fill_val = mode_val[0] if len(mode_val) > 0 else ""
+                    self._dataset[col] = self._dataset[col].fillna(fill_val)
+                else:
+                    self._dataset[col] = self._dataset[col].fillna("")
 
             filled_count += null_count
 
