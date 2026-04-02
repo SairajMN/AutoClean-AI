@@ -160,32 +160,34 @@ def get_system_prompt(dataset_info: Dict[str, Any], task_info: Dict[str, Any] = 
     
     null_info = ", ".join([f"{k}: {v}" for k, v in null_counts.items() if v > 0]) if null_counts else "no nulls"
     
-    prompt = f"""You are an AI data cleaning agent. Clean the dataset.
+    prompt = f"""You are an AI data cleaning agent. Clean the dataset step by step.
 
 Dataset: {rows} rows, {cols} columns
 Columns: {", ".join(columns) if columns else "none"}
 Null values: {null_info}
 
-Available actions:
-- drop_nulls: Remove rows with nulls. Params: column (optional)
-- fill_nulls: Fill null values. Params: column, strategy (mean/median/mode)
-- remove_duplicates: Remove duplicate rows. Params: columns (optional)
-- filter_rows: Filter rows. Params: column, operator (==/!=/>/</contains), value
-- drop_columns: Remove columns. Params: columns (comma-separated)
-- convert_types: Convert column type. Params: column, dtype (str/int/float/datetime)
-- validate_email: Validate emails. Params: column, drop_invalid (true/false)
-- outlier_removal: Remove outliers. Params: column, multiplier (default 1.5)
-- normalize: Normalize column. Params: column, method (minmax/zscore)
-- submit: Submit when done
-- revert: Undo last action
+IMPORTANT: Return EXACTLY ONE action per response. Do NOT return multiple actions.
 
-Respond with ONLY a JSON object. Use the exact action_type name from the list above.
+Available actions (use exact names):
+- drop_nulls (params: column - optional)
+- fill_nulls (params: column, strategy: mean/median/mode)
+- remove_duplicates (params: columns - optional)
+- filter_rows (params: column, operator, value)
+- drop_columns (params: columns)
+- convert_types (params: column, dtype: str/int/float/datetime)
+- validate_email (params: column, drop_invalid: true/false)
+- outlier_removal (params: column, multiplier: float)
+- normalize (params: column, method: minmax/zscore)
+- submit (when all cleaning is done)
+
+Return ONLY this JSON format - ONE action:
+{{"action_type": "action_name", "params": {{}}}}
 """
 
     if task_info:
         prompt += f"\nTask: {task_info.get('description', '')}\n"
-        prompt += f"Expected actions: {', '.join(task_info.get('expected_actions', []))}\n"
-        prompt += "Follow the expected actions sequence to clean the data efficiently.\n"
+        expected = task_info.get('expected_actions', [])
+        prompt += f"Do these actions in order: {', '.join(expected)}\n"
 
     return prompt
 
@@ -211,17 +213,46 @@ def get_model_message(client: OpenAI, step: int, dataset_info: Dict, task_info: 
         )
 
         text = (completion.choices[0].message.content or "").strip()
+        print(f"[DEBUG] Model response: {text[:300]}...", flush=True)
 
         # Try to parse JSON response
         try:
-            # Find JSON in response
-            start = text.find("{")
-            end = text.rfind("}") + 1
-            if start >= 0 and end > start:
-                action = json.loads(text[start:end])
-                return action
-        except json.JSONDecodeError:
+            import re
+            # Remove markdown code blocks
+            text = re.sub(r'```json\s*', '', text)
+            text = re.sub(r'```\s*', '', text)
+            text = text.strip()
+            
+            # Parse JSON
+            data = json.loads(text)
+            
+            # Handle {"actions": [...]} format - extract first action
+            if isinstance(data, dict) and "actions" in data:
+                actions = data["actions"]
+                if actions and len(actions) > 0:
+                    first_action = actions[0]
+                    if "action_type" in first_action:
+                        return first_action
+            
+            # Handle direct action format
+            if isinstance(data, dict) and "action_type" in data:
+                return data
+            
+            # Handle array format - extract first item
+            if isinstance(data, list) and len(data) > 0:
+                first_item = data[0]
+                if isinstance(first_item, dict) and "action_type" in first_item:
+                    return first_item
+        except (json.JSONDecodeError, AttributeError, KeyError) as e:
+            print(f"[DEBUG] JSON parse error: {e}", flush=True)
             pass
+
+        # Try to extract action from text using keywords
+        action_keywords = ["drop_nulls", "fill_nulls", "remove_duplicates", "filter_rows", 
+                          "drop_columns", "convert_types", "validate_email", "outlier_removal", "normalize"]
+        for kw in action_keywords:
+            if kw in text.lower():
+                return {"action_type": kw, "params": {}, "reasoning": f"Extracted from response"}
 
         # Fallback: return submit if we've taken many steps
         if step >= MAX_STEPS:
@@ -256,6 +287,7 @@ async def run_task(env: DataCleaningEnvClient, task_id: str, client: OpenAI) -> 
         # Fetch full dataset info for the prompt
         try:
             dataset_info = await env.get_dataset()
+            print(f"[DEBUG] Dataset info: shape={dataset_info.get('shape')}, columns={dataset_info.get('columns')}", flush=True)
         except Exception as e:
             print(f"[DEBUG] Could not fetch dataset info: {e}", flush=True)
 
@@ -263,11 +295,22 @@ async def run_task(env: DataCleaningEnvClient, task_id: str, client: OpenAI) -> 
         tasks = await env.get_tasks()
         task_info = next((t for t in tasks if t.get("task_id") == task_id), {})
 
+        # Track actions taken to prevent loops
+        actions_taken_list = []
+        
         for step in range(1, MAX_STEPS + 1):
             # Get action from model
             action = get_model_message(client, step, dataset_info, task_info, history)
             action_type = action.get("action_type", "submit")
             params = action.get("params", {})
+            
+            # Check for repeated actions (loop detection)
+            action_key = f"{action_type}_{json.dumps(params, sort_keys=True)}"
+            if action_key in actions_taken_list[-3:] and action_type != "submit":
+                print(f"[DEBUG] Detected repeated action, forcing submit", flush=True)
+                action_type = "submit"
+                params = {}
+            actions_taken_list.append(action_key)
 
             # Execute action
             if action_type == "submit":
