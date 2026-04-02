@@ -14,6 +14,154 @@ This environment simulates a realistic data cleaning workflow where AI agents mu
 - **Deterministic grading** with scores from 0.0 to 1.0
 - **Shaped rewards** providing partial progress signals throughout the episode
 
+## System Architecture
+
+```mermaid
+graph TB
+    subgraph "AI Agent (LLM)"
+        LLM[LLM Model<br/>Groq/OpenAI/OpenRouter]
+    end
+    
+    subgraph "Inference Script"
+        Parser[JSON Parser]
+        LoopDetect[Loop Detector]
+        ScoreExtract[Score Extractor]
+    end
+    
+    subgraph "FastAPI Server (env/app.py)"
+        API[API Endpoints]
+        Env[DataCleaningEnv]
+    end
+    
+    subgraph "Environment Core"
+        Engine[Action Engine]
+        Grader[Grader]
+        Reward[Reward Calculator]
+        Dataset[(Dataset)]
+    end
+    
+    LLM -->|JSON Action| Parser
+    Parser -->|Validated Action| LoopDetect
+    LoopDetect -->|Action| API
+    API -->|Observation| LLM
+    API --> Env
+    Env --> Engine
+    Engine --> Dataset
+    Env --> Grader
+    Env --> Reward
+    Grader --> ScoreExtract
+    ScoreExtract -->|Final Score| Results[Results]
+    
+    style LLM fill:#e1f5fe
+    style Env fill:#f3e5f5
+    style Dataset fill:#fff3e0
+    style Results fill:#e8f5e9
+```
+
+## OpenEnv Lifecycle Flow
+
+```mermaid
+sequenceDiagram
+    participant Agent as AI Agent (LLM)
+    participant Client as Inference Client
+    participant Server as FastAPI Server
+    participant Env as DataCleaningEnv
+    participant Engine as Action Engine
+    participant Grader as Grader
+    
+    Note over Agent,Grader: Episode Start
+    Client->>Server: POST /reset {task_id}
+    Server->>Env: reset(task_id, session_id)
+    Env->>Env: Generate Dataset
+    Env->>Engine: set_dataset()
+    Env-->>Server: Observation (initial state)
+    Server-->>Client: Observation
+    Client-->>Agent: Dataset Info + Task
+    
+    Note over Agent,Grader: Step Loop
+    loop Until done=True
+        Agent->>Client: JSON Action
+        Client->>Server: POST /step {action_type, params}
+        Server->>Env: step(action)
+        Env->>Engine: execute_action()
+        Engine->>Engine: Validate Action
+        Engine->>Engine: Apply Transformation
+        Engine-->>Env: Result
+        Env->>Env: Calculate Reward
+        Env-->>Server: Observation + Reward + Done
+        Server-->>Client: Response
+        Client-->>Agent: Observation
+        
+        alt Repeated Action Detected
+            Client->>Client: Force Submit
+        end
+    end
+    
+    Note over Agent,Grader: Episode End
+    Agent->>Client: Submit Action
+    Client->>Server: POST /submit
+    Server->>Env: step(submit)
+    Env->>Grader: grade()
+    Grader->>Grader: Calculate Score
+    Grader-->>Env: GradeResult
+    Env-->>Server: Observation + Final Score
+    Server-->>Client: Response with Score
+    Client-->>Agent: Final Score
+```
+
+## User Flow
+
+```mermaid
+flowchart TD
+    Start([User Starts]) --> SelectTask[Select Task Difficulty]
+    
+    SelectTask --> Easy{Easy?}
+    Easy -->|Yes| EasyTask[100 rows, 5 columns<br/>Actions: drop_nulls, remove_duplicates]
+    Easy -->|No| Medium{Medium?}
+    Medium -->|Yes| MediumTask[200 rows, 6 columns<br/>Actions: fill_nulls, validate_email, outlier_removal]
+    Medium -->|No| HardTask[500 rows, 8 columns<br/>Full cleaning pipeline]
+    
+    EasyTask --> Reset[POST /reset]
+    MediumTask --> Reset
+    HardTask --> Reset
+    
+    Reset --> GetInfo[Get Dataset Info]
+    GetInfo --> LLMDecision[LLM Analyzes Data]
+    
+    LLMDecision --> ActionChoice{Choose Action}
+    
+    ActionChoice -->|drop_nulls| DropNulls[Remove null rows]
+    ActionChoice -->|fill_nulls| FillNulls[Fill missing values]
+    ActionChoice -->|remove_duplicates| RemoveDups[Remove duplicates]
+    ActionChoice -->|validate_email| ValidateEmail[Check email format]
+    ActionChoice -->|outlier_removal| RemoveOutliers[Remove outliers]
+    ActionChoice -->|convert_types| ConvertTypes[Fix data types]
+    ActionChoice -->|normalize| Normalize[Normalize columns]
+    ActionChoice -->|submit| Submit[Submit for grading]
+    
+    DropNulls --> Step[POST /step]
+    FillNulls --> Step
+    RemoveDups --> Step
+    ValidateEmail --> Step
+    RemoveOutliers --> Step
+    ConvertTypes --> Step
+    Normalize --> Step
+    Submit --> Grade
+    
+    Step --> CheckRepeat{Repeated 3x?}
+    CheckRepeat -->|Yes| Submit
+    CheckRepeat -->|No| GetInfo
+    
+    Grade[Grader Evaluates] --> Score[Calculate Score 0.0-1.0]
+    Score --> Display[Display Results]
+    Display --> End([End])
+    
+    style Start fill:#e1f5fe
+    style End fill:#e8f5e9
+    style Grade fill:#fff3e0
+    style Score fill:#f3e5f5
+```
+
 ## Action Space
 
 The environment supports the following actions:
@@ -101,10 +249,8 @@ The server will start on `http://localhost:7860`.
 # Set environment variables
 export API_BASE_URL="https://api.groq.com/openai/v1"
 export MODEL_NAME="llama-3.1-8b-instant"
-export HF_TOKEN="you_api_key_here"
+export HF_TOKEN="your_api_key_here"
 export SPACE_URL="https://sairaj2-env.hf.space"
-
-
 
 # Run inference
 python inference.py
@@ -129,52 +275,13 @@ pip install openenv-core
 
 # Deploy
 openenv push ./env
-```
-
-## Baseline Scores
-
-| Task | Score | Status |
-|------|-------|--------|
-| easy_001 | TBD | - |
-| medium_001 | TBD | - |
-| hard_001 | TBD | - |
-| **Average** | **TBD** | - |
-
-*Run `python inference.py` to generate baseline scores.*
-
-## Project Structure
 
 ```
-AutoClean-AI/
-├── inference.py          # Baseline inference script
-├── openenv.yaml          # OpenEnv configuration
-├── README.md             # This file
-├── .dockerignore         # Docker ignore patterns
-└── env/                  # Environment package
-    ├── __init__.py
-    ├── app.py            # FastAPI server
-    ├── client.py         # OpenEnv client
-    ├── datacleaner_env.py # Main environment
-    ├── Dockerfile        # Docker configuration
-    ├── grader.py         # Grading system
-    ├── inference.py      # HF Spaces entry point
-    ├── models.py         # Data models
-    ├── openenv.yaml      # OpenEnv config
-    ├── pyproject.toml    # Dependencies
-    ├── README.md         # Environment docs
-    ├── requirements.txt  # Pip requirements
-    ├── reward.py         # Reward system
-    ├── tasks.py          # Task definitions
-    └── static/
-        └── index.html    # Web interface
-```
 
----
+## Example or Testing of Inference.py with llama-3.1-8b-instant
 
-## Testing with the Inference Script
 
 ```bash
-
 
 python3 inference.py
 
@@ -220,6 +327,43 @@ python3 inference.py
   Average Score: 0.7251
 ============================================================
 ```
+
+## Baseline Scores
+
+| Task | Score | Status |
+|------|-------|--------|
+| easy_001 | 0.7600 | ✅ PASS |
+| medium_001 | 0.7625 | ✅ PASS |
+| hard_001 | 0.6527 | ✅ PASS |
+| **Average** | **0.7251** | - |
+
+## Project Structure
+
+```
+AutoClean-AI/
+├── inference.py          # Baseline inference script
+├── openenv.yaml          # OpenEnv configuration
+├── README.md             # This file
+├── .dockerignore         # Docker ignore patterns
+└── env/                  # Environment package
+    ├── __init__.py
+    ├── app.py            # FastAPI server
+    ├── client.py         # OpenEnv client
+    ├── datacleaner_env.py # Main environment
+    ├── Dockerfile        # Docker configuration
+    ├── grader.py         # Grading system
+    ├── inference.py      # HF Spaces entry point
+    ├── models.py         # Data models
+    ├── openenv.yaml      # OpenEnv config
+    ├── pyproject.toml    # Dependencies
+    ├── README.md         # Environment docs
+    ├── requirements.txt  # Pip requirements
+    ├── reward.py         # Reward system
+    ├── tasks.py          # Task definitions
+    └── static/
+        └── index.html    # Web interface
+```
+
 ---
 
 ## License
