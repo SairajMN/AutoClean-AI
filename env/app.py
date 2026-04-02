@@ -20,8 +20,8 @@ from pydantic import BaseModel
 from openenv.core import Action
 
 # Import OpenEnv-compliant environment
-from env.datacleaner_env import DataCleaningEnv
-from env.tasks import get_tasks, get_all_task_configs
+from datacleaner_env import DataCleaningEnv
+from tasks import get_tasks, get_all_task_configs
 
 # Configure logging
 logging.basicConfig(

@@ -5,7 +5,7 @@ Defines tasks with dataset configurations and grading criteria.
 
 from typing import List, Dict, Any
 
-from env.models import TaskConfig
+from models import TaskConfig
 
 
 def get_tasks() -> List[str]:

@@ -9,7 +9,7 @@ from typing import Dict, Any, List, Optional
 import pandas as pd
 import numpy as np
 
-from env.models import Reward
+from models import Reward
 
 logger = logging.getLogger("openenv-datacleaner.reward")
 

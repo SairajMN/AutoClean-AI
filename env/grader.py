@@ -10,8 +10,8 @@ from typing import Dict, Any, List, Optional
 import pandas as pd
 import numpy as np
 
-from env.models import GradeResult, TaskConfig
-from env.tasks import get_task_config
+from models import GradeResult, TaskConfig
+from tasks import get_task_config
 
 logger = logging.getLogger("openenv-datacleaner.grader")
 

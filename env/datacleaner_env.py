@@ -12,17 +12,17 @@ import numpy as np
 
 from openenv.core import Environment, Action, Observation, State
 
-from env.models import (
+from models import (
     DataCleaningAction,
     DataCleaningObservation,
     DataCleaningState,
     Reward,
     GradeResult,
 )
-from env.action_engine import ActionEngine, ActionValidationError, ActionExecutionError
-from env.tasks import get_task_config, get_tasks
-from env.grader import Grader
-from env.reward import RewardCalculator
+from action_engine import ActionEngine, ActionValidationError, ActionExecutionError
+from tasks import get_task_config, get_tasks
+from grader import Grader
+from reward import RewardCalculator
 
 logger = logging.getLogger("openenv-datacleaner.env")
 

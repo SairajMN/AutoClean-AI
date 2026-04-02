@@ -14,12 +14,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Copy env directory
-COPY env/ /app/env/
-
-# Copy static files
-COPY static/ /app/static/
-
 EXPOSE 7860
 
 CMD ["python", "app.py"]
