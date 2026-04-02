@@ -99,10 +99,12 @@ The server will start on `http://localhost:7860`.
 
 ```bash
 # Set environment variables
-export API_BASE_URL="https://api.openai.com/v1"
-export MODEL_NAME="gpt-4o-mini"
-export HF_TOKEN="your-api-key"
-export SPACE_URL="http://localhost:7860"
+export API_BASE_URL="https://api.groq.com/openai/v1"
+export MODEL_NAME="llama-3.1-8b-instant"
+export HF_TOKEN="you_api_key_here"
+export SPACE_URL="https://sairaj2-env.hf.space"
+
+
 
 # Run inference
 python inference.py
@@ -166,6 +168,59 @@ AutoClean-AI/
     └── static/
         └── index.html    # Web interface
 ```
+
+---
+
+## Testing with the Inference Script
+
+```bash
+
+
+python3 inference.py
+
+[INFO] Starting inference with model=llama-3.1-8b-instant, base_url=https://api.groq.com/openai/v1
+[START] task=easy_001 env=openenv-datacleaner model=llama-3.1-8b-instant
+[DEBUG] Dataset info: shape=[100, 5], columns=['id', 'name', 'age', 'email', 'salary']
+[DEBUG] Model response: {"action_type": "drop_nulls", "params": {"column": "name"}}...
+[STEP] step=1 action={"action_type": "drop_nulls", "params": {"column": "name"}} reward=0.3407 done=False
+[DEBUG] Model response: {"action_type": "drop_nulls", "params": {}}...
+[STEP] step=2 action={"action_type": "drop_nulls", "params": {}} reward=0.4500 done=False
+[DEBUG] Model response: {"action_type": "drop_nulls", "params": {}}...
+[DEBUG] Detected repeated action, forcing submit
+[STEP] step=3 action={"action_type": "drop_nulls", "params": {}} reward=1.6625 done=True
+[END] success=True steps=3 score=0.7600 rewards=[0.3407, 0.45, 1.6625]
+[START] task=medium_001 env=openenv-datacleaner model=llama-3.1-8b-instant
+[DEBUG] Dataset info: shape=[200, 6], columns=['id', 'name', 'age', 'email', 'salary', 'department']
+[DEBUG] Model response: {"action_type": "fill_nulls", "params": {"column": "email", "strategy": "mode"}}...
+[STEP] step=1 action={"action_type": "fill_nulls", "params": {"column": "email", "strategy": "mode"}} reward=0.2194 done=False
+[DEBUG] Model response: {"action_type": "fill_nulls", "params": {"column": "reward", "strategy": "mean"}}...
+[STEP] step=2 action={"action_type": "fill_nulls", "params": {"column": "reward", "strategy": "mean"}} reward=0.0667 done=False
+[DEBUG] Model response: {"action_type": "fill_nulls", "params": {"column": "reward", "strategy": "mean"}}...
+[DEBUG] Detected repeated action, forcing submit
+[STEP] step=3 action={"action_type": "fill_nulls", "params": {"column": "reward", "strategy": "mean"}} reward=1.2672 done=True
+[END] success=True steps=3 score=0.7625 rewards=[0.2194, 0.0667, 1.2672]
+[START] task=hard_001 env=openenv-datacleaner model=llama-3.1-8b-instant
+[DEBUG] Dataset info: shape=[500, 8], columns=['id', 'name', 'age', 'email', 'salary', 'department', 'join_date', 'score']
+[DEBUG] Model response: {"action_type": "drop_nulls", "params": {"column": "name"}}...
+[STEP] step=1 action={"action_type": "drop_nulls", "params": {"column": "name"}} reward=0.1830 done=False
+[DEBUG] Model response: {"action_type": "drop_nulls", "params": {}}...
+[STEP] step=2 action={"action_type": "drop_nulls", "params": {}} reward=0.2714 done=False
+[DEBUG] Model response: {"action_type": "drop_nulls", "params": {}}...
+[DEBUG] Detected repeated action, forcing submit
+[STEP] step=3 action={"action_type": "drop_nulls", "params": {}} reward=1.2237 done=True
+[END] success=True steps=3 score=0.6527 rewards=[0.183, 0.2714, 1.2237]
+
+============================================================
+[SUMMARY] Baseline Results
+============================================================
+  easy_001: score=0.7600 steps=3 [PASS]
+  medium_001: score=0.7625 steps=3 [PASS]
+  hard_001: score=0.6527 steps=3 [PASS]
+
+  Average Score: 0.7251
+============================================================
+```
+---
 
 ## License
 
