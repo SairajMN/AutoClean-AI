@@ -804,15 +804,16 @@
                 const res = await fetch('/submit', { method: 'POST' });
                 const data = await res.json();
                 
-                if (data.done) {
-                    const score = data.final_score || data.grade?.final_score || 0;
-                    const feedback = data.grade?.feedback || '';
-                    document.getElementById('final-score').textContent = score.toFixed(2);
-                    document.getElementById('score-feedback').textContent = feedback;
-                    document.getElementById('score-value').textContent = score.toFixed(2);
-                    document.getElementById('score-modal').classList.remove('hidden');
-                    addLog(`Submitted! Score: ${score.toFixed(2)}`, 'success');
-                }
+                console.log('Submit response:', data); // Debug log
+                
+                // Always show score modal regardless of done status
+                const score = data.final_score || data.grade?.final_score || 0;
+                const feedback = data.grade?.feedback || '';
+                document.getElementById('final-score').textContent = score.toFixed(2);
+                document.getElementById('score-feedback').textContent = feedback;
+                document.getElementById('score-value').textContent = score.toFixed(2);
+                document.getElementById('score-modal').classList.remove('hidden');
+                addLog(`Submitted! Score: ${score.toFixed(2)}`, 'success');
             } catch (e) {
                 addLog(`Submit failed: ${e.message}`, 'error');
             }

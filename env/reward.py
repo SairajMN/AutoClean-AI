@@ -1,4 +1,4 @@
-code"""
+"""
 OpenEnv Data Cleaning Environment - Reward System
 Computes structured rewards aligned with OpenEnv expectations.
 """
