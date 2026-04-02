@@ -4,7 +4,7 @@ description: OpenEnv-compliant AI-powered data cleaning environment for Hugging 
 
 # OpenEnv configuration
 framework: openenv
-entrypoint: app.py
+entrypoint: env/app.py
 
 # Environment configuration
 environment:

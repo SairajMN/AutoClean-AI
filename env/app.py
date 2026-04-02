@@ -103,6 +103,11 @@ async def root():
     """Root endpoint with web interface."""
     return FileResponse("static/index.html")
 
+@app.get("/web")
+async def web_interface():
+    """Web interface endpoint (alias for root)."""
+    return FileResponse("static/index.html")
+
 
 # ============================================================
 # Core OpenEnv Endpoints
@@ -128,13 +133,17 @@ async def health_check():
 
 
 @app.post("/reset")
-async def reset_environment(request: ResetRequest):
+async def reset_environment(request: ResetRequest = None):
     """
     Reset the OpenEnv environment and initialize a new task.
     Calls env.reset(task_id=request.task_id).
+    Accepts empty body with defaults.
     """
     if openenv_env is None:
         raise HTTPException(status_code=503, detail="Environment not initialized")
+    
+    if request is None:
+        request = ResetRequest()
     
     try:
         logger.info(f"Resetting environment: task_id={request.task_id}")
@@ -326,11 +335,17 @@ async def submit_solution():
     
     observation = openenv_env.step(action)
     
+    # Get grade from environment state
+    state = openenv_env.state
+    grade = state.grade
+    
     return {
         "status": "submitted",
         "observation": observation.metadata,
         "reward": observation.reward,
         "done": observation.done,
+        "grade": grade,
+        "final_score": grade.get("final_score", 0.0) if grade else 0.0,
     }
 
 
