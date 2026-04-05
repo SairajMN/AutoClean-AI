@@ -1,0 +1,34 @@
+name: autoclean-ai-env
+description: Autonomous Data Cleaning Agent powered by OpenEnv
+version: 2.0.0
+author: AutoClean AI Team
+
+entry: env.py:AutoCleanEnv
+task: task.py:generate_task
+evaluator: evaluator.py:evaluate_cleanliness
+
+max_steps: 50
+success_threshold: 0.95
+
+actions:
+  - fill_missing
+  - remove_duplicates
+  - normalize
+  - fix_types
+  - remove_outliers
+  - drop_column
+  - encode_categorical
+  - handle_text
+
+metrics:
+  - total_score
+  - missing_ratio
+  - duplicate_ratio
+  - type_consistency
+  - outlier_ratio
+  - schema_validity
+
+deployment:
+  platform: huggingface
+  runtime: python3.10
+  hardware: cpu-basic
