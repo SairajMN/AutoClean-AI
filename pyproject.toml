@@ -1,0 +1,21 @@
+[project]
+name = "openenv-datacleaner"
+version = "1.0.0"
+description = "OpenEnv-compliant AI-powered data cleaning environment"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "pandas",
+    "numpy",
+    "openenv-core",
+    "huggingface_hub",
+]
+
+[project.scripts]
+server = "server.app:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
