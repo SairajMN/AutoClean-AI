@@ -152,75 +152,22 @@ class AutoCleanEnv:
         return schema
 
     def _generate_diff(self, before: pd.DataFrame, after: pd.DataFrame) -> Dict[str, Any]:
-        """Generate difference report between dataset versions"""
-        try:
-            rows_changed = len(after) - len(before)
-            columns_removed = list(set(before.columns) - set(after.columns))
-            columns_added = list(set(after.columns) - set(before.columns))
-            
-            # Handle shape mismatch safely
-            common_columns = before.columns.intersection(after.columns)
-            min_rows = min(len(before), len(after))
-            
-            values_modified = 0
-            if len(common_columns) > 0 and min_rows > 0:
-                # Only compare common columns and matching rows
-                before_subset = before[common_columns].head(min_rows).fillna(0)
-                after_subset = after[common_columns].head(min_rows).fillna(0)
-                
-                # Convert to compatible types for comparison
-                for col in common_columns:
-                    if before_subset[col].dtype != after_subset[col].dtype:
-                        try:
-                            before_subset[col] = before_subset[col].astype(str)
-                            after_subset[col] = after_subset[col].astype(str)
-                        except:
-                            pass
-                
-                # Calculate modified values safely
-                try:
-                    comparison = before_subset.ne(after_subset)
-                    values_modified = int(comparison.sum().sum())
-                except:
-                    values_modified = 0
-            
-            return {
-                'rows_changed': rows_changed,
-                'values_modified': values_modified,
-                'columns_removed': columns_removed,
-                'columns_added': columns_added
-            }
-        except Exception as e:
-            # Fallback to safe defaults on any error
-            return {
-                'rows_changed': len(after) - len(before),
-                'values_modified': 0,
-                'columns_removed': list(set(before.columns) - set(after.columns)),
-                'columns_added': list(set(after.columns) - set(before.columns)),
-                'error': str(e)
-            }
-
-    def _get_action_explanation(self, action_type: str, params: Dict) -> str:
-        """Generate human readable explanation for action"""
-        explanations = {
-            'fill_missing': f"Filled missing values in column '{params.get('column', 'all')}' using {params.get('strategy', 'mean')} strategy",
-            'remove_duplicates': "Removed duplicate rows from dataset",
-            'normalize': f"Normalized column '{params.get('column')}' using {params.get('method', 'min-max')} scaling",
-            'fix_types': "Corrected data types for columns",
-            'remove_outliers': f"Removed outliers from column '{params.get('column')}' using {params.get('method', 'IQR')} method",
-            'drop_column': f"Dropped column '{params.get('column')}'",
-            'encode_categorical': f"Encoded categorical column '{params.get('column')}'",
-            'handle_text': f"Cleaned text values in column '{params.get('column')}'"
-        }
-        return explanations.get(action_type, f"Executed {action_type} action")
-
-    def _get_observation(self) -> Dict[str, Any]:
-        """Return current environment observation"""
+        """Generate difference report between dataset versions - OPTIMIZED"""
+        rows_changed = len(after) - len(before)
+        columns_removed = list(set(before.columns) - set(after.columns))
+        columns_added = list(set(after.columns) - set(before.columns))
+        
+        values_modified = 0
+        # Fast path: only compute values_modified if shapes match exactly
+        if before.shape == after.shape:
+            try:
+                values_modified = int((before.values != after.values).sum())
+            except:
+                values_modified = 0
+        
         return {
-            'state': self.state,
-            'metrics': self._calculate_metrics(self.state),
-            'schema': self.schema,
-            'step': self.current_step,
-            'history': self.history,
-            'reward': self.reward
+            'rows_changed': rows_changed,
+            'values_modified': values_modified,
+            'columns_removed': columns_removed,
+            'columns_added': columns_added
         }
