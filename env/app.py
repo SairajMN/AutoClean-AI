@@ -155,8 +155,11 @@ async def reset_environment(request: ResetRequest = None):
         )
         
         return {
+            "success": True,
             "status": "reset_complete",
-            "observation": observation.metadata,
+            "data": {
+                "observation": observation.metadata
+            },
             "session_id": openenv_env.get_session_id(),
             "task_id": openenv_env.get_task_id()
         }
@@ -192,10 +195,14 @@ async def execute_step(request: StepRequest):
         observation = openenv_env.step(action)
         
         return {
+            "success": True,
             "status": "success",
-            "observation": observation.metadata,
-            "reward": observation.reward,
-            "done": observation.done,
+            "data": {
+                "observation": observation.metadata,
+                "reward": observation.reward,
+                "done": observation.done,
+                "info": {}
+            }
         }
         
     except TypeError as e:
