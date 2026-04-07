@@ -159,5 +159,6 @@ class AutoCleanEnv:
             'metrics': self._calculate_metrics(self.state),
             'schema': self.schema,
             'step': self.current_step,
-            'reward': self.reward
+            'reward': self.reward,
+            'state': self.state
         }
