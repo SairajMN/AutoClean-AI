@@ -19,7 +19,14 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-agent = AutoCleanAgent()
+# Lazy initialized agent - created only on first request
+agent = None
+
+def get_agent():
+    global agent
+    if agent is None:
+        agent = AutoCleanAgent()
+    return agent
 
 
 @app.get("/")
@@ -39,7 +46,7 @@ async def clean_dataset(file: UploadFile = File(...)):
         else:
             raise HTTPException(status_code=400, detail="Unsupported file format")
             
-        report = agent.run(df)
+        report = get_agent().run(df)
         
         return {
             "success": True,
