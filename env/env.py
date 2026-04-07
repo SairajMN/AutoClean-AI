@@ -153,12 +153,52 @@ class AutoCleanEnv:
 
     def _generate_diff(self, before: pd.DataFrame, after: pd.DataFrame) -> Dict[str, Any]:
         """Generate difference report between dataset versions"""
-        return {
-            'rows_changed': len(after) - len(before),
-            'values_modified': int((before != after).sum().sum()),
-            'columns_removed': list(set(before.columns) - set(after.columns)),
-            'columns_added': list(set(after.columns) - set(before.columns))
-        }
+        try:
+            rows_changed = len(after) - len(before)
+            columns_removed = list(set(before.columns) - set(after.columns))
+            columns_added = list(set(after.columns) - set(before.columns))
+            
+            # Handle shape mismatch safely
+            common_columns = before.columns.intersection(after.columns)
+            min_rows = min(len(before), len(after))
+            
+            values_modified = 0
+            if len(common_columns) > 0 and min_rows > 0:
+                # Only compare common columns and matching rows
+                before_subset = before[common_columns].head(min_rows).fillna(0)
+                after_subset = after[common_columns].head(min_rows).fillna(0)
+                
+                # Convert to compatible types for comparison
+                for col in common_columns:
+                    if before_subset[col].dtype != after_subset[col].dtype:
+                        try:
+                            before_subset[col] = before_subset[col].astype(str)
+                            after_subset[col] = after_subset[col].astype(str)
+                        except:
+                            pass
+                
+                # Calculate modified values safely
+                try:
+                    comparison = before_subset.ne(after_subset)
+                    values_modified = int(comparison.sum().sum())
+                except:
+                    values_modified = 0
+            
+            return {
+                'rows_changed': rows_changed,
+                'values_modified': values_modified,
+                'columns_removed': columns_removed,
+                'columns_added': columns_added
+            }
+        except Exception as e:
+            # Fallback to safe defaults on any error
+            return {
+                'rows_changed': len(after) - len(before),
+                'values_modified': 0,
+                'columns_removed': list(set(before.columns) - set(after.columns)),
+                'columns_added': list(set(after.columns) - set(before.columns)),
+                'error': str(e)
+            }
 
     def _get_action_explanation(self, action_type: str, params: Dict) -> str:
         """Generate human readable explanation for action"""
