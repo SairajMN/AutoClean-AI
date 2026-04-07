@@ -36,6 +36,8 @@ class AutoCleanAgent:
                 
             if metrics.get('missing_ratio', 0) > 0.05:
                 df = observation.get('state')
+                if df is None:
+                    df = observation.get('dataset')
                 if df is not None:
                     missing_cols = df.columns[df.isna().any()].tolist()
                     if missing_cols:
