@@ -11,6 +11,7 @@ import asyncio
 import json
 import os
 import re
+import sys
 from typing import Any, Dict, List, Optional
 
 import aiohttp
@@ -24,6 +25,8 @@ BENCHMARK = os.getenv("BENCHMARK", "openenv-datacleaner")
 TASKS = [task.strip() for task in os.getenv("TASKS", "easy_001,medium_001,hard_001").split(",") if task.strip()]
 MAX_STEPS = int(os.getenv("MAX_STEPS", "8"))
 TEMPERATURE = float(os.getenv("TEMPERATURE", "0.1"))
+REQUEST_TIMEOUT_S = float(os.getenv("REQUEST_TIMEOUT_S", "60"))
+DISABLE_SSL_VERIFY = os.getenv("DISABLE_SSL_VERIFY", "1").lower() not in {"0", "false", "no"}
 
 
 class DataCleaningEnvClient:
@@ -34,7 +37,9 @@ class DataCleaningEnvClient:
 
     async def _request(self, method: str, path: str, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         url = f"{self.base_url}{path}"
-        async with aiohttp.ClientSession() as session:
+        timeout = aiohttp.ClientTimeout(total=REQUEST_TIMEOUT_S)
+        connector = aiohttp.TCPConnector(ssl=False if self.base_url.startswith("https://") and DISABLE_SSL_VERIFY else None)
+        async with aiohttp.ClientSession(timeout=timeout, connector=connector) as session:
             async with session.request(method, url, json=payload) as resp:
                 resp.raise_for_status()
                 return await resp.json()
@@ -323,7 +328,8 @@ async def run_task(env: DataCleaningEnvClient, client: OpenAI, task_id: str, tas
             success = final_score >= 0.5
             emit_step(step_count, {"action_type": "submit", "params": {}}, terminal_reward, True, None)
 
-    except Exception:
+    except Exception as exc:
+        print(f"[inference] task={task_id} failed: {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
         emit_end(False, step_count, 0.0, rewards)
         return {"task_id": task_id, "score": 0.0, "success": False, "steps": step_count, "rewards": rewards}
 
@@ -336,7 +342,8 @@ async def main() -> None:
     client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
     try:
         task_configs = {task["task_id"]: task for task in await env.get_tasks()}
-    except Exception:
+    except Exception as exc:
+        print(f"[inference] failed to fetch task catalog: {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
         task_configs = {}
 
     for task_id in TASKS:
@@ -346,7 +353,8 @@ async def main() -> None:
 if __name__ == "__main__":
     try:
         asyncio.run(main())
-    except Exception:
+    except Exception as exc:
+        print(f"[inference] fatal error: {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
         for task_id in TASKS:
             emit_start(task_id)
             emit_end(False, 0, 0.0, [])
