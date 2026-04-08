@@ -12,7 +12,7 @@ This environment simulates a realistic data cleaning workflow where AI agents mu
 
 - **Realistic datasets** with common data quality problems
 - **10 data cleaning actions** covering the most common cleaning operations
-- **3 difficulty levels** from basic to advanced cleaning pipelines
+- **4 graded tasks** spanning easy, medium, hard, and a realistic employee-record cleaning scenario
 - **Deterministic grading** with scores from 0.0 to 1.0
 - **Shaped rewards** providing partial progress signals throughout the episode
 
@@ -204,11 +204,12 @@ Each observation contains:
 ## Task Descriptions
 
 
-| Task ID      | Difficulty | Description                                                                         | Expected Actions                                                                                     |
-| ------------ | ---------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `easy_001`   | Easy       | Basic cleaning: drop nulls and remove duplicates from a 100-row dataset             | drop_nulls, remove_duplicates                                                                        |
-| `medium_001` | Medium     | Intermediate: handle nulls, validate emails, remove outliers from a 200-row dataset | fill_nulls, validate_email, outlier_removal                                                          |
-| `hard_001`   | Hard       | Advanced: full pipeline with type conversion and normalization on a 500-row dataset | drop_nulls, fill_nulls, remove_duplicates, validate_email, convert_types, outlier_removal, normalize |
+| Task ID         | Difficulty | Description                                                                          | Expected Actions                                                                                      | Grader |
+| --------------- | ---------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | ------ |
+| `easy_001`      | Easy       | Basic cleaning: drop nulls and remove duplicates from a 100-row dataset              | drop_nulls, remove_duplicates                                                                         | `env.grader.EasyDataCleaningGrader` |
+| `medium_001`    | Medium     | Intermediate: handle nulls, validate emails, remove outliers from a 200-row dataset  | fill_nulls, validate_email, outlier_removal                                                           | `env.grader.MediumDataCleaningGrader` |
+| `hard_001`      | Hard       | Advanced: full pipeline with type conversion and normalization on a 500-row dataset  | drop_nulls, fill_nulls, remove_duplicates, validate_email, convert_types, outlier_removal, normalize | `env.grader.HardDataCleaningGrader` |
+| `employee_demo` | Hard       | Realistic HR dataset with missing values, duplicates, and numeric outliers            | fill_nulls, remove_duplicates, outlier_removal                                                        | `env.grader.EmployeeDataCleaningGrader` |
 
 
 ## Grading Criteria
@@ -229,14 +230,11 @@ Each task is graded on multiple criteria with weights:
 ### Local Setup
 
 ```bash
-# Navigate to the env directory
-cd env
-
 # Install dependencies
-pip install -r requirements.txt
+pip install -r env/requirements.txt
 
 # Run the server
-python app.py
+uvicorn env.app:app --host 0.0.0.0 --port 7860
 ```
 
 The server will start on `http://localhost:7860`.
@@ -262,13 +260,13 @@ The server will start on `http://localhost:7860`.
 
 ```bash
 # Set environment variables
-export API_BASE_URL="https://api.groq.com/openai/v1"
-export MODEL_NAME="llama-3.1-8b-instant"
+export API_BASE_URL="https://router.huggingface.co/v1"
+export MODEL_NAME="Qwen/Qwen2.5-72B-Instruct"
 export HF_TOKEN="your_api_key_here"
-export SPACE_URL="https://sairaj2-env.hf.space"
+export SPACE_URL="https://your-space.hf.space"
 
 # Run inference
-python inference.py
+python3 inference.py
 ```
 
 ### Docker Deployment
@@ -285,11 +283,8 @@ docker run -p 7860:7860 openenv-datacleaner
 ### Hugging Face Spaces Deployment
 
 ```bash
-# Install openenv-core
-pip install openenv-core
-
 # Deploy
-openenv push ./env
+openenv push .
 
 ```
 

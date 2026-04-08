@@ -5,7 +5,10 @@ Defines tasks with dataset configurations and grading criteria.
 
 from typing import List, Dict, Any
 
-from models import TaskConfig
+try:
+    from .models import TaskConfig
+except ImportError:  # pragma: no cover - supports direct execution from env/
+    from models import TaskConfig
 
 
 def get_tasks() -> List[str]:
@@ -27,6 +30,7 @@ def get_task_config(task_id: str) -> TaskConfig:
     """
     task_configs = {
         "easy_001": TaskConfig(
+            name="Basic Data Cleaning",
             task_id="easy_001",
             difficulty="easy",
             description="Basic data cleaning: drop nulls and remove duplicates",
@@ -41,9 +45,11 @@ def get_task_config(task_id: str) -> TaskConfig:
                 "null_handling": 0.4,
                 "duplicate_handling": 0.4,
                 "efficiency": 0.2
-            }
+            },
+            grader="env.grader.EasyDataCleaningGrader",
         ),
         "medium_001": TaskConfig(
+            name="Intermediate Data Cleaning",
             task_id="medium_001",
             difficulty="medium",
             description="Intermediate cleaning: handle nulls, validate emails, remove outliers",
@@ -61,9 +67,11 @@ def get_task_config(task_id: str) -> TaskConfig:
                 "email_validation": 0.3,
                 "outlier_handling": 0.25,
                 "efficiency": 0.2
-            }
+            },
+            grader="env.grader.MediumDataCleaningGrader",
         ),
         "hard_001": TaskConfig(
+            name="Advanced Data Cleaning",
             task_id="hard_001",
             difficulty="hard",
             description="Advanced cleaning: full pipeline with type conversion and normalization",
@@ -93,12 +101,14 @@ def get_task_config(task_id: str) -> TaskConfig:
                 "outlier_handling": 0.2,
                 "normalization": 0.1,
                 "efficiency": 0.1
-            }
+            },
+            grader="env.grader.HardDataCleaningGrader",
         ),
         "employee_demo": TaskConfig(
+            name="Employee Dataset Cleaning",
             task_id="employee_demo",
-            difficulty="demo",
-            description="Real employee dataset. Practice cleaning real HR data with missing values, formatting issues and duplicates.",
+            difficulty="hard",
+            description="Real employee dataset. Practice cleaning HR data with missing values, duplicates, and numeric outliers.",
             dataset_config={
                 "source": "employee",
                 "columns": ["Education", "JoiningYear", "City", "PaymentTier", "Age", "Gender", "EverBenched", "ExperienceInCurrentDomain", "LeaveOrNot"]
@@ -106,15 +116,14 @@ def get_task_config(task_id: str) -> TaskConfig:
             expected_actions=[
                 "fill_nulls",
                 "remove_duplicates",
-                "standardize_format",
-                "detect_outliers"
+                "outlier_removal"
             ],
             grading_criteria={
-                "null_handling": 0.25,
-                "duplicate_handling": 0.25,
-                "format_standardization": 0.25,
-                "outlier_handling": 0.25
-            }
+                "null_handling": 0.4,
+                "duplicate_handling": 0.3,
+                "outlier_handling": 0.3
+            },
+            grader="env.grader.EmployeeDataCleaningGrader",
         )
     }
 

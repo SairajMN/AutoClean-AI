@@ -4,6 +4,7 @@ version = "1.0.0"
 description = "OpenEnv-compliant AI-powered data cleaning environment"
 requires-python = ">=3.10"
 dependencies = [
+    "aiohttp",
     "fastapi",
     "uvicorn",
     "pydantic",
@@ -11,10 +12,11 @@ dependencies = [
     "numpy",
     "openenv-core",
     "huggingface_hub",
+    "openai",
 ]
 
 [project.scripts]
-server = "server.app:main"
+server = "env.app:main"
 
 [build-system]
 requires = ["setuptools>=61.0"]

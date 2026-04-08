@@ -8,6 +8,7 @@ import os
 import sys
 import logging
 import time
+from pathlib import Path
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 
@@ -20,8 +21,12 @@ from pydantic import BaseModel
 from openenv.core import Action
 
 # Import OpenEnv-compliant environment
-from datacleaner_env import DataCleaningEnv
-from tasks import get_tasks, get_all_task_configs
+try:
+    from .datacleaner_env import DataCleaningEnv
+    from .tasks import get_tasks, get_all_task_configs
+except ImportError:  # pragma: no cover - supports direct execution from env/
+    from datacleaner_env import DataCleaningEnv
+    from tasks import get_tasks, get_all_task_configs
 
 # Configure logging
 logging.basicConfig(
@@ -30,6 +35,8 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)]
 )
 logger = logging.getLogger("openenv-datacleaner")
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -48,7 +55,7 @@ app.add_middleware(
 )
 
 # Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 # ============================================================
 # Request/Response Models
@@ -101,12 +108,12 @@ async def startup_event():
 @app.get("/")
 async def root():
     """Root endpoint with web interface."""
-    return FileResponse("static/index.html")
+    return FileResponse(STATIC_DIR / "index.html")
 
 @app.get("/web")
 async def web_interface():
     """Web interface endpoint (alias for root)."""
-    return FileResponse("static/index.html")
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 # ============================================================
@@ -153,12 +160,14 @@ async def reset_environment(request: ResetRequest = None):
             task_id=request.task_id,
             session_id=request.session_id
         )
+        observation_payload = observation.model_dump()
         
         return {
             "success": True,
             "status": "reset_complete",
+            "observation": observation_payload,
             "data": {
-                "observation": observation.metadata
+                "observation": observation_payload
             },
             "session_id": openenv_env.get_session_id(),
             "task_id": openenv_env.get_task_id()
@@ -193,12 +202,17 @@ async def execute_step(request: StepRequest):
         
         # Call OpenEnv step
         observation = openenv_env.step(action)
+        observation_payload = observation.model_dump()
         
         return {
             "success": True,
             "status": "success",
+            "observation": observation_payload,
+            "reward": observation.reward,
+            "done": observation.done,
+            "info": {},
             "data": {
-                "observation": observation.metadata,
+                "observation": observation_payload,
                 "reward": observation.reward,
                 "done": observation.done,
                 "info": {}
@@ -226,10 +240,12 @@ async def get_available_tasks():
         config = configs[task_id]
         tasks.append({
             "task_id": config.task_id,
+            "name": config.name,
             "difficulty": config.difficulty,
             "description": config.description,
             "expected_actions": config.expected_actions,
-            "grading_criteria": config.grading_criteria
+            "grading_criteria": config.grading_criteria,
+            "grader": config.grader,
         })
     
     return {
@@ -317,10 +333,11 @@ async def revert_last_action():
     )
     
     observation = openenv_env.step(action)
+    observation_payload = observation.model_dump()
     
     return {
         "status": "reverted",
-        "observation": observation.metadata,
+        "observation": observation_payload,
         "reward": observation.reward,
         "done": observation.done,
     }
@@ -341,14 +358,15 @@ async def submit_solution():
     )
     
     observation = openenv_env.step(action)
+    observation_payload = observation.model_dump()
     
     # Get grade from environment state
     state = openenv_env.state
     grade = state.grade
-    
+
     return {
         "status": "submitted",
-        "observation": observation.metadata,
+        "observation": observation_payload,
         "reward": observation.reward,
         "done": observation.done,
         "grade": grade,

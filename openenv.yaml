@@ -1,53 +1,36 @@
+spec_version: 1
 name: openenv-datacleaner
-version: "1.0.0"
-description: OpenEnv-compliant AI-powered data cleaning environment for Hugging Face Spaces
+type: space
+runtime: fastapi
+app: env.app:app
+port: 7860
 
-# OpenEnv configuration
-framework: openenv
-entrypoint: env/app.py
+metadata:
+  description: OpenEnv-compliant data cleaning environment for evaluating real-world tabular remediation agents.
+  tags:
+    - openenv
+    - data-cleaning
+    - tabular-data
+    - huggingface-space
 
-# Environment configuration
-environment:
-  type: docker
-  port: 7860
-  base_image: python:3.10-slim
-
-# Server configuration
-server:
-  host: "0.0.0.0"
-  port: 7860
-  workers: 1
-  log_level: info
-
-# OpenEnv tasks
 tasks:
-  - easy_001
-  - medium_001
-  - hard_001
-
-# Endpoints
-endpoints:
-  health:
-    path: /health
-    method: GET
-  reset:
-    path: /reset
-    method: POST
-  step:
-    path: /step
-    method: POST
-  tasks:
-    path: /tasks
-    method: GET
-  state:
-    path: /state
-    method: GET
-  submit:
-    path: /submit
-    method: POST
-
-# Deployment
-deployment:
-  platform: huggingface_spaces
-  sdk: docker
-  auto_build: true
+  - id: easy_001
+    name: Basic Data Cleaning
+    difficulty: easy
+    description: Drop null-heavy rows and remove duplicates from a small employee-style dataset.
+    grader: env.grader.EasyDataCleaningGrader
+  - id: medium_001
+    name: Intermediate Data Cleaning
+    difficulty: medium
+    description: Resolve missing values, validate emails, and remove outliers while preserving useful rows.
+    grader: env.grader.MediumDataCleaningGrader
+  - id: hard_001
+    name: Advanced Data Cleaning
+    difficulty: hard
+    description: Execute a multi-step cleaning pipeline including type conversion and normalization on a larger dataset.
+    grader: env.grader.HardDataCleaningGrader
+  - id: employee_demo
+    name: Employee Dataset Cleaning
+    difficulty: hard
+    description: Clean a realistic HR dataset with missing values, duplicates, and numeric outliers.
+    grader: env.grader.EmployeeDataCleaningGrader

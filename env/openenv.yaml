@@ -1,25 +1,36 @@
-
 spec_version: 1
-name: env
+name: openenv-datacleaner
 type: space
 runtime: fastapi
-app: server.app:app
-port: 8000
+app: env.app:app
+port: 7860
+
+metadata:
+  description: OpenEnv-compliant data cleaning environment for evaluating real-world tabular remediation agents.
+  tags:
+    - openenv
+    - data-cleaning
+    - tabular-data
+    - huggingface-space
 
 tasks:
   - id: easy_001
     name: Basic Data Cleaning
-    description: "Basic data cleaning: drop nulls and remove duplicates"
-    grader: grader.Grader
+    difficulty: easy
+    description: Drop null-heavy rows and remove duplicates from a small employee-style dataset.
+    grader: env.grader.EasyDataCleaningGrader
   - id: medium_001
     name: Intermediate Data Cleaning
-    description: "Intermediate cleaning: handle nulls, validate emails, remove outliers"
-    grader: grader.Grader
+    difficulty: medium
+    description: Resolve missing values, validate emails, and remove outliers while preserving useful rows.
+    grader: env.grader.MediumDataCleaningGrader
   - id: hard_001
     name: Advanced Data Cleaning
-    description: "Advanced cleaning: full pipeline with type conversion and normalization"
-    grader: grader.Grader
+    difficulty: hard
+    description: Execute a multi-step cleaning pipeline including type conversion and normalization on a larger dataset.
+    grader: env.grader.HardDataCleaningGrader
   - id: employee_demo
     name: Employee Dataset Cleaning
-    description: "Real employee dataset. Practice cleaning real HR data"
-    grader: grader.Grader
+    difficulty: hard
+    description: Clean a realistic HR dataset with missing values, duplicates, and numeric outliers.
+    grader: env.grader.EmployeeDataCleaningGrader

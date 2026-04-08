@@ -30,9 +30,14 @@ class DataCleaningClient(EnvClient[DataCleaningAction, DataCleaningObservation, 
         """Parse server response into StepResult."""
         obs_data = payload.get("observation", {})
         observation = DataCleaningObservation(
+            dataset_info=obs_data.get("dataset_info", {}),
+            available_actions=obs_data.get("available_actions", []),
+            step_count=obs_data.get("step_count", 0),
+            task_id=obs_data.get("task_id"),
+            message=obs_data.get("message", ""),
             done=payload.get("done", False),
             reward=payload.get("reward"),
-            metadata=obs_data,
+            metadata=obs_data.get("metadata", {}),
         )
         return StepResult(
             observation=observation,

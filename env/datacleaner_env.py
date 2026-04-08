@@ -12,17 +12,30 @@ import numpy as np
 
 from openenv.core import Environment, Action, Observation, State
 
-from models import (
-    DataCleaningAction,
-    DataCleaningObservation,
-    DataCleaningState,
-    Reward,
-    GradeResult,
-)
-from action_engine import ActionEngine, ActionValidationError, ActionExecutionError
-from tasks import get_task_config, get_tasks
-from grader import Grader
-from reward import RewardCalculator
+try:
+    from .models import (
+        DataCleaningAction,
+        DataCleaningObservation,
+        DataCleaningState,
+        Reward,
+        GradeResult,
+    )
+    from .action_engine import ActionEngine, ActionValidationError, ActionExecutionError
+    from .tasks import get_task_config, get_tasks
+    from .grader import Grader
+    from .reward import RewardCalculator
+except ImportError:  # pragma: no cover - supports direct execution from env/
+    from models import (
+        DataCleaningAction,
+        DataCleaningObservation,
+        DataCleaningState,
+        Reward,
+        GradeResult,
+    )
+    from action_engine import ActionEngine, ActionValidationError, ActionExecutionError
+    from tasks import get_task_config, get_tasks
+    from grader import Grader
+    from reward import RewardCalculator
 
 logger = logging.getLogger("openenv-datacleaner.env")
 
@@ -187,15 +200,15 @@ class DataCleaningEnv(Environment):
                 message=f"Action validation failed: {str(e)}",
                 done=False
             )
-            observation.reward = -0.2  # Penalty for invalid action
+            observation.reward = 0.0
             return observation
-        
+
         except ActionExecutionError as e:
             observation = self._build_observation(
                 message=f"Action execution failed: {str(e)}",
                 done=False
             )
-            observation.reward = -0.1  # Penalty for execution error
+            observation.reward = 0.0
             return observation
         
         # Calculate reward
@@ -351,8 +364,13 @@ class DataCleaningEnv(Environment):
                     for col, dtype in self._action_engine.dataset.dtypes.items()
                 }
             }
-        
+
         return DataCleaningObservation(
+            dataset_info=dataset_info,
+            available_actions=self._action_engine.get_available_actions() + ["submit", "revert"],
+            step_count=self._step_count,
+            task_id=self._task_id,
+            message=message,
             done=done or self._done,
             reward=None,
             metadata={
@@ -360,7 +378,9 @@ class DataCleaningEnv(Environment):
                 "available_actions": self._action_engine.get_available_actions() + ["submit", "revert"],
                 "step_count": self._step_count,
                 "task_id": self._task_id,
-                "message": message
+                "message": message,
+                "session_id": self._session_id,
+                "episode_id": self._episode_id,
             }
         )
 
@@ -408,8 +428,8 @@ class DataCleaningEnv(Environment):
             message="Last action reverted" if reverted else "Nothing to revert",
             done=False
         )
-        observation.reward = -0.05 if reverted else 0.0
-        
+        observation.reward = 0.0
+
         return observation
 
     # ============================================================

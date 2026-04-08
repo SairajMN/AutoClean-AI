@@ -10,8 +10,12 @@ from typing import Dict, Any, List, Optional
 import pandas as pd
 import numpy as np
 
-from models import GradeResult, TaskConfig
-from tasks import get_task_config
+try:
+    from .models import GradeResult, TaskConfig
+    from .tasks import get_task_config
+except ImportError:  # pragma: no cover - supports direct execution from env/
+    from models import GradeResult, TaskConfig
+    from tasks import get_task_config
 
 logger = logging.getLogger("openenv-datacleaner.grader")
 
@@ -304,3 +308,19 @@ class Grader:
                 feedback_parts.append(f"  - {criterion}: excellent ({score:.2f})")
 
         return "\n".join(feedback_parts)
+
+
+class EasyDataCleaningGrader(Grader):
+    """Task-specific grader alias for the easy data-cleaning task."""
+
+
+class MediumDataCleaningGrader(Grader):
+    """Task-specific grader alias for the medium data-cleaning task."""
+
+
+class HardDataCleaningGrader(Grader):
+    """Task-specific grader alias for the hard data-cleaning task."""
+
+
+class EmployeeDataCleaningGrader(Grader):
+    """Task-specific grader alias for the employee demo task."""

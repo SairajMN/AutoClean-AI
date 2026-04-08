@@ -121,7 +121,7 @@ class Reward(BaseModel):
         penalty: float = 0.0
     ) -> "Reward":
         """Factory method to create a structured reward."""
-        value = quality + progress - penalty
+        value = max(0.0, min(1.0, quality + progress - penalty))
         return cls(
             value=round(value, 4),
             components={
@@ -136,6 +136,10 @@ class TaskConfig(BaseModel):
     """
     Configuration for a data cleaning task.
     """
+    name: str = Field(
+        default="",
+        description="Human-readable task name"
+    )
     task_id: str = Field(
         ...,
         description="Unique task identifier"
@@ -159,6 +163,10 @@ class TaskConfig(BaseModel):
     grading_criteria: Dict[str, Any] = Field(
         default_factory=dict,
         description="Criteria for grading the task"
+    )
+    grader: str = Field(
+        default="",
+        description="Import path for the task's grader implementation"
     )
 
 

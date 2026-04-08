@@ -9,7 +9,10 @@ from typing import Dict, Any, List, Optional
 import pandas as pd
 import numpy as np
 
-from models import Reward
+try:
+    from .models import Reward
+except ImportError:  # pragma: no cover - supports direct execution from env/
+    from models import Reward
 
 logger = logging.getLogger("openenv-datacleaner.reward")
 
