@@ -11,12 +11,18 @@ from .models import (
     GradeResult,
 )
 
-# Backward-compatible alias for legacy modules that still import AutoCleanEnv.
-AutoCleanEnv = DataCleaningEnv
+try:
+    from .env import AutoCleanEnv as LegacyAutoCleanEnv
+except Exception:  # pragma: no cover - keep package importable if legacy env breaks
+    LegacyAutoCleanEnv = None
+
+# Backward-compatible export for stale legacy runners.
+AutoCleanEnv = LegacyAutoCleanEnv or DataCleaningEnv
 
 __all__ = [
     "DataCleaningEnv",
     "AutoCleanEnv",
+    "LegacyAutoCleanEnv",
     "DataCleaningClient",
     "DataCleaningAction",
     "DataCleaningObservation",

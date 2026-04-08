@@ -1,5 +1,9 @@
 import pandas as pd
-from utils.validators import DataValidators
+
+try:
+    from .utils.validators import DataValidators
+except ImportError:  # pragma: no cover - direct execution fallback
+    from utils.validators import DataValidators
 
 
 def evaluate_cleanliness(df: pd.DataFrame, schema: dict = None) -> dict:

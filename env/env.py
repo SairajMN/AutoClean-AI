@@ -3,9 +3,15 @@ import numpy as np
 from typing import Dict, List, Any, Tuple
 import json
 from datetime import datetime
-from utils.cleaners import DataCleaners
-from utils.validators import DataValidators
-from utils.transformers import DataTransformers
+
+try:
+    from .utils.cleaners import DataCleaners
+    from .utils.validators import DataValidators
+    from .utils.transformers import DataTransformers
+except ImportError:  # pragma: no cover - direct execution fallback
+    from utils.cleaners import DataCleaners
+    from utils.validators import DataValidators
+    from utils.transformers import DataTransformers
 
 
 class AutoCleanEnv:
