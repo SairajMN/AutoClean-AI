@@ -19,8 +19,7 @@ def get_tasks() -> List[str]:
     return [
         "easy_001",
         "medium_001",
-        "hard_001",
-        "employee_demo"
+        "hard_001"
     ]
 
 
@@ -103,27 +102,6 @@ def get_task_config(task_id: str) -> TaskConfig:
                 "efficiency": 0.1
             },
             grader="env.grader.HardDataCleaningGrader",
-        ),
-        "employee_demo": TaskConfig(
-            name="Employee Dataset Cleaning",
-            task_id="employee_demo",
-            difficulty="hard",
-            description="Real employee dataset. Practice cleaning HR data with missing values, duplicates, and numeric outliers.",
-            dataset_config={
-                "source": "employee",
-                "columns": ["Education", "JoiningYear", "City", "PaymentTier", "Age", "Gender", "EverBenched", "ExperienceInCurrentDomain", "LeaveOrNot"]
-            },
-            expected_actions=[
-                "fill_nulls",
-                "remove_duplicates",
-                "outlier_removal"
-            ],
-            grading_criteria={
-                "null_handling": 0.4,
-                "duplicate_handling": 0.3,
-                "outlier_handling": 0.3
-            },
-            grader="env.grader.EmployeeDataCleaningGrader",
         )
     }
 
