@@ -63,10 +63,15 @@ class Grader:
 
         # Normalize score
         final_score = total_score / total_weight if total_weight > 0 else 0.0
-        final_score = min(max(final_score, 0.0), 1.0)
         
-        # Remove decimal part while maintaining float type
-        final_score = float(int(round(final_score)))
+        # ENSURE SCORE IS STRICTLY BETWEEN 0 AND 1
+        # Never exactly 0.0 or 1.0
+        if final_score <= 0.0:
+            final_score = 0.0001
+        elif final_score >= 1.0:
+            final_score = 0.9999
+        
+        final_score = round(final_score, 4)
 
         feedback = self._generate_feedback(breakdown, final_score)
 

@@ -17,7 +17,7 @@ def evaluate_cleanliness(df: pd.DataFrame, schema: dict = None) -> dict:
     if schema:
         schema_validity = validators.schema_validity(df, schema)
     else:
-        schema_validity = 1.0
+        schema_validity = 0.9999
     
     weights = {
         'missing': 0.35,
@@ -36,7 +36,7 @@ def evaluate_cleanliness(df: pd.DataFrame, schema: dict = None) -> dict:
     )
     
     return {
-        'score': round(float(total_score), 4),
+        'score': min(0.9999, max(0.0001, round(float(total_score), 4))),
         'components': {
             'missing_values': round(float(1 - missing_ratio), 4),
             'duplicates': round(float(1 - duplicate_ratio), 4),
