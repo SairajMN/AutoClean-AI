@@ -103,12 +103,17 @@ def get_task_config(task_id: str) -> TaskConfig:
                 "source": "employee",
                 "columns": ["Education", "JoiningYear", "City", "PaymentTier", "Age", "Gender", "EverBenched", "ExperienceInCurrentDomain", "LeaveOrNot"]
             },
-            expected_actions=["fill_nulls", "remove_duplicates", "outlier_removal"],
+            expected_actions=[
+                "fill_nulls",
+                "remove_duplicates",
+                "standardize_format",
+                "detect_outliers"
+            ],
             grading_criteria={
-                "null_handling": 0.3,
+                "null_handling": 0.25,
                 "duplicate_handling": 0.25,
-                "outlier_handling": 0.3,
-                "efficiency": 0.15
+                "format_standardization": 0.25,
+                "outlier_handling": 0.25
             }
         )
     }

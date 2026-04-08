@@ -91,6 +91,7 @@ class Grader:
             "type_conversion": self._evaluate_type_conversion,
             "normalization": self._evaluate_normalization,
             "efficiency": self._evaluate_efficiency,
+            "format_standardization": self._evaluate_format_standardization,
         }
 
         if criterion not in evaluators:
@@ -240,6 +241,46 @@ class Grader:
             return round(expected_count / action_count, 4)
         else:
             return round(max(0.0, 1.0 - (action_count - expected_count) / expected_count), 4)
+
+
+    def _evaluate_format_standardization(self) -> float:
+        """Score based on format standardization quality."""
+        # Check for common formatting issues
+        score = 0.0
+        actions_taken = [a["action_type"] for a in self._action_history]
+
+        # Check if standardization actions were taken
+        if "standardize_format" in actions_taken:
+            # Check specific columns for format standardization
+            columns_to_check = ["Education", "Gender", "City"]
+            for col in columns_to_check:
+                if col in self._current_dataset.columns:
+                    # Check if text is properly formatted (title case for names, consistent case for categories)
+                    if col in ["Education", "Gender"]:
+                        # Check if values are consistently capitalized
+                        value_counts = self._current_dataset[col].value_counts()
+                        if len(value_counts) > 0:
+                            # Check if most values follow proper capitalization
+                            properly_formatted = self._current_dataset[col].astype(str).apply(
+                                lambda x: x.istitle() if col == "Education" else x.isupper() or x.islower()
+                            ).mean()
+                            score += properly_formatted * 0.3
+                    elif col == "City":
+                        # Check if city names are consistently capitalized
+                        properly_formatted = self._current_dataset[col].astype(str).apply(
+                            lambda x: x.istitle()
+                        ).mean()
+                        score += properly_formatted * 0.4
+
+            # Check if date formats are standardized
+            date_cols = ["JoiningYear"]
+            for col in date_cols:
+                if col in self._current_dataset.columns:
+                    # Check if dates are in consistent format
+                    if pd.api.types.is_datetime64_any_dtype(self._current_dataset[col]):
+                        score += 0.3
+
+        return round(min(max(score, 0.0), 1.0), 4)
 
     def _generate_feedback(
         self, breakdown: Dict[str, float], final_score: float
