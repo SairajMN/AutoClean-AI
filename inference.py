@@ -334,11 +334,19 @@ async def run_task(env: DataCleaningEnvClient, client: OpenAI, task_id: str, tas
 async def main() -> None:
     env = DataCleaningEnvClient(SPACE_URL)
     client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
-    task_configs = {task["task_id"]: task for task in await env.get_tasks()}
+    try:
+        task_configs = {task["task_id"]: task for task in await env.get_tasks()}
+    except Exception:
+        task_configs = {}
 
     for task_id in TASKS:
         await run_task(env, client, task_id, task_configs.get(task_id, {}))
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except Exception:
+        for task_id in TASKS:
+            emit_start(task_id)
+            emit_end(False, 0, 0.0, [])
