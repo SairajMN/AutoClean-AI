@@ -1,3 +1,4 @@
+
 spec_version: 1
 name: env
 type: space
@@ -8,17 +9,17 @@ port: 8000
 tasks:
   - id: easy_001
     name: Basic Data Cleaning
-    description: Basic data cleaning: drop nulls and remove duplicates
+    description: "Basic data cleaning: drop nulls and remove duplicates"
     grader: grader.Grader
   - id: medium_001
     name: Intermediate Data Cleaning
-    description: Intermediate cleaning: handle nulls, validate emails, remove outliers
+    description: "Intermediate cleaning: handle nulls, validate emails, remove outliers"
     grader: grader.Grader
   - id: hard_001
     name: Advanced Data Cleaning
-    description: Advanced cleaning: full pipeline with type conversion and normalization
+    description: "Advanced cleaning: full pipeline with type conversion and normalization"
     grader: grader.Grader
   - id: employee_demo
     name: Employee Dataset Cleaning
-    description: Real employee dataset. Practice cleaning real HR data
+    description: "Real employee dataset. Practice cleaning real HR data"
     grader: grader.Grader
