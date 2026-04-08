@@ -66,7 +66,6 @@ class Grader:
         final_score = min(max(final_score, 0.0), 1.0)
         
         # Ensure score is strictly between 0 and 1 (not 0.0 or 1.0)
-        # Required for Meta PyTorch Hackathon validation
         if final_score <= 0.0:
             final_score = 0.0001
         elif final_score >= 1.0:
