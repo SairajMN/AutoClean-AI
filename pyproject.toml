@@ -3,6 +3,7 @@ name = "openenv-datacleaner"
 version = "1.0.0"
 description = "OpenEnv-compliant AI-powered data cleaning environment"
 requires-python = ">=3.10"
+
 dependencies = [
     "aiohttp",
     "fastapi",

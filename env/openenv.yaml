@@ -29,8 +29,3 @@ tasks:
     difficulty: hard
     description: Execute a multi-step cleaning pipeline including type conversion and normalization on a larger dataset.
     grader: env.grader.HardDataCleaningGrader
-  - id: employee_demo
-    name: Employee Dataset Cleaning
-    difficulty: hard
-    description: Clean a realistic HR dataset with missing values, duplicates, and numeric outliers.
-    grader: env.grader.EmployeeDataCleaningGrader

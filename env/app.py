@@ -378,16 +378,20 @@ async def submit_solution():
 # Main Entry Point
 # ============================================================
 
-if __name__ == "__main__":
+def main():
+    """Main entry point for server command."""
     import uvicorn
     
     port = int(os.environ.get("PORT", 7860))
     logger.info(f"Starting OpenEnv Data Cleaner on port {port}")
     
     uvicorn.run(
-        "app:app",
+        "env.app:app",
         host="0.0.0.0",
         port=port,
         log_level="info",
         reload=False
     )
+
+if __name__ == "__main__":
+    main()
