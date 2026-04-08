@@ -64,6 +64,9 @@ class AutoCleanAgent:
         observation = self.env.reset(dataset)
         done = False
         
+        # Required structured output - START block
+        print("[START] task=datacleaning", flush=True)
+        
         while not done and self.env.current_step < max_steps:
             action = self._decide_action(observation)
             
@@ -71,9 +74,15 @@ class AutoCleanAgent:
                 break
                 
             observation, reward, done, info = self.env.step(action)
+            # Required structured output - STEP block
+            print(f"[STEP] step={self.env.current_step} reward={reward:.4f}", flush=True)
             print(f"Step {self.env.current_step}: {action['type']} | Score: {reward:.4f}")
             
         final_report = self._generate_final_report()
+        
+        # Required structured output - END block
+        print(f"[END] task=datacleaning score={self.env.reward:.4f} steps={self.env.current_step}", flush=True)
+        
         return final_report
         
     def _generate_final_report(self) -> Dict[str, Any]:
