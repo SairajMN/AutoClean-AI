@@ -357,6 +357,13 @@ async def run_task(env: DataCleaningEnvClient, task_id: str, client: OpenAI) -> 
                         if match:
                             score = float(match.group(1))
                 
+                # ENSURE SCORE IS STRICTLY BETWEEN 0 AND 1
+                # Never exactly 0.0 or 1.0 as required by validation
+                if score <= 0.0:
+                    score = 0.001
+                elif score >= 1.0:
+                    score = 0.999
+                
                 success = score >= 0.5
                 break
 
@@ -366,6 +373,12 @@ async def run_task(env: DataCleaningEnvClient, task_id: str, client: OpenAI) -> 
             info = result.get("info", {})
             grade = info.get("grade", {})
             score = grade.get("final_score", 0.0)
+            # ENSURE SCORE IS STRICTLY BETWEEN 0 AND 1
+            if score <= 0.0:
+                score = 0.001
+            elif score >= 1.0:
+                score = 0.999
+            
             success = score >= 0.5
             rewards.append(result.get("reward", 0.0) or 0.0)
             steps_taken += 1

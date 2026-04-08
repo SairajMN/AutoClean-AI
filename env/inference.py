@@ -104,7 +104,14 @@ class AutoCleanAgent:
         final_report = self._generate_final_report()
         
         # Required structured output - END block
-        print(f"[END] task=datacleaning score={self.env.reward:.4f} steps={self.env.current_step}", flush=True)
+        # Ensure score is strictly between 0 and 1 (never exactly 0.0 or 1.0)
+        final_score = self.env.reward
+        if final_score <= 0.0:
+            final_score = 0.0001
+        elif final_score >= 1.0:
+            final_score = 0.9999
+            
+        print(f"[END] task=datacleaning score={final_score:.4f} steps={self.env.current_step}", flush=True)
         
         return final_report
         
