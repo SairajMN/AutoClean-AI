@@ -28,7 +28,7 @@ MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
 
 SPACE_URL = os.environ.get("SPACE_URL", "http://localhost:7860")
 MAX_STEPS = 20
-TASKS = ["easy_001", "medium_001", "hard_001"]
+TASKS = ["easy_001", "medium_001", "hard_001", "employee_demo"]
 
 # ============================================================
 # Logging Helpers

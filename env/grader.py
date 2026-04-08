@@ -63,7 +63,16 @@ class Grader:
 
         # Normalize score
         final_score = total_score / total_weight if total_weight > 0 else 0.0
-        final_score = round(min(max(final_score, 0.0), 1.0), 4)
+        final_score = min(max(final_score, 0.0), 1.0)
+        
+        # Ensure score is strictly between 0 and 1 (not 0.0 or 1.0)
+        # Required for Meta PyTorch Hackathon validation
+        if final_score <= 0.0:
+            final_score = 0.0001
+        elif final_score >= 1.0:
+            final_score = 0.9999
+            
+        final_score = round(final_score, 4)
 
         feedback = self._generate_feedback(breakdown, final_score)
 
