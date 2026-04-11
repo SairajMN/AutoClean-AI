@@ -442,12 +442,5 @@ class HardDataCleaningGrader(Grader):
         )
 
 
-class EmployeeDataCleaningGrader(Grader):
-    """Task-specific grader alias for the employee demo task."""
 
 
-class FourGrader(Grader):
-    """4th grader - required to pass validation check"""
-
-class FiveGrader(Grader):
-    """5th grader - required to pass validation check"""
