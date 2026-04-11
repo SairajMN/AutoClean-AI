@@ -330,8 +330,12 @@ class MediumDataCleaningGrader(Grader):
 class HardDataCleaningGrader(Grader):
     pass
 
-# ✅ MAGIC VALIDATOR TRIGGER: This line makes it pass
-Grader, EasyDataCleaningGrader, MediumDataCleaningGrader, HardDataCleaningGrader
+
+GRADERS = [
+    EasyDataCleaningGrader,
+    MediumDataCleaningGrader,
+    HardDataCleaningGrader
+]
 
 
 
