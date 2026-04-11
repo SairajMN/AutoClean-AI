@@ -245,7 +245,7 @@ async def get_available_tasks():
             "description": config.description,
             "expected_actions": config.expected_actions,
             "grading_criteria": config.grading_criteria,
-            "grader": config.grader,
+            "grader": f"/grade/{task_id}",
         })
     
     return {
