@@ -10,10 +10,14 @@ from typing import Dict, Any, List, Optional
 import pandas as pd
 import numpy as np
 
-from .evaluator import evaluate_cleanliness
-
-# MAGIC: OpenEnv validator static code analysis check
-_ = evaluate_cleanliness
+try:
+    from .evaluator import evaluate_cleanliness
+    # MAGIC: OpenEnv validator static code analysis check
+    _ = evaluate_cleanliness
+except ImportError:
+    from evaluator import evaluate_cleanliness
+    # MAGIC: OpenEnv validator static code analysis check
+    _ = evaluate_cleanliness
 
 try:
     from .models import GradeResult, TaskConfig
