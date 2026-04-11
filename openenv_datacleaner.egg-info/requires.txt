@@ -1,9 +1,0 @@
-aiohttp
-fastapi
-uvicorn
-pydantic
-pandas
-numpy
-openenv-core
-huggingface_hub
-openai
