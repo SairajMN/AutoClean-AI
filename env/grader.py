@@ -319,6 +319,17 @@ class Grader:
         return "\n".join(feedback_parts)
 
 
+class EasyDataCleaningGrader(Grader):
+    pass
+
+
+class MediumDataCleaningGrader(Grader):
+    pass
+
+
+class HardDataCleaningGrader(Grader):
+    pass
+
 
 
 
