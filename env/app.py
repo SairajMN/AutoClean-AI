@@ -375,6 +375,76 @@ async def submit_solution():
 
 
 # ============================================================
+# OpenEnv Grading Endpoints
+# ============================================================
+
+@app.get("/grade/easy_001")
+async def grade_easy_001():
+    """Grading endpoint for easy_001 task - OpenEnv compliant."""
+    if openenv_env is None or openenv_env.state.task_id != "easy_001":
+        raise HTTPException(status_code=400, detail="Environment not initialized for easy_001 task")
+    
+    state = openenv_env.state
+    grade = state.grade
+    
+    score = grade.get("final_score", 0.0) if grade else 0.0
+    # Score is always 0.0 ≤ score ≤ 1.0
+    score = max(0.0001, min(0.9999, score))
+    
+    # Shaped reward for RL training (separate from evaluation score)
+    reward = (score * 10.0) - (state.step_count * 0.1)
+    
+    return {
+        "score": float(score),
+        "reward": float(reward)
+    }
+
+
+@app.get("/grade/medium_001")
+async def grade_medium_001():
+    """Grading endpoint for medium_001 task - OpenEnv compliant."""
+    if openenv_env is None or openenv_env.state.task_id != "medium_001":
+        raise HTTPException(status_code=400, detail="Environment not initialized for medium_001 task")
+    
+    state = openenv_env.state
+    grade = state.grade
+    
+    score = grade.get("final_score", 0.0) if grade else 0.0
+    # Score is always 0.0 ≤ score ≤ 1.0
+    score = max(0.0001, min(0.9999, score))
+    
+    # Shaped reward for RL training (separate from evaluation score)
+    reward = (score * 10.0) - (state.step_count * 0.08)
+    
+    return {
+        "score": float(score),
+        "reward": float(reward)
+    }
+
+
+@app.get("/grade/hard_001")
+async def grade_hard_001():
+    """Grading endpoint for hard_001 task - OpenEnv compliant."""
+    if openenv_env is None or openenv_env.state.task_id != "hard_001":
+        raise HTTPException(status_code=400, detail="Environment not initialized for hard_001 task")
+    
+    state = openenv_env.state
+    grade = state.grade
+    
+    score = grade.get("final_score", 0.0) if grade else 0.0
+    # Score is always 0.0 ≤ score ≤ 1.0
+    score = max(0.0001, min(0.9999, score))
+    
+    # Shaped reward for RL training (separate from evaluation score)
+    reward = (score * 10.0) - (state.step_count * 0.05)
+    
+    return {
+        "score": float(score),
+        "reward": float(reward)
+    }
+
+
+# ============================================================
 # Main Entry Point
 # ============================================================
 
