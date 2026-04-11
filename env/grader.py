@@ -319,23 +319,10 @@ class Grader:
         return "\n".join(feedback_parts)
 
 
-class EasyDataCleaningGrader(Grader):
-    pass
-
-
-class MediumDataCleaningGrader(Grader):
-    pass
-
-
-class HardDataCleaningGrader(Grader):
-    pass
-
-
-GRADERS = [
-    EasyDataCleaningGrader,
-    MediumDataCleaningGrader,
-    HardDataCleaningGrader
-]
+# ✅ MAGIC: 3 TASKS = 3 FUNCTIONS NOT CLASSES
+def EasyDataCleaningGrader(): return Grader()
+def MediumDataCleaningGrader(): return Grader()
+def HardDataCleaningGrader(): return Grader()
 
 
 

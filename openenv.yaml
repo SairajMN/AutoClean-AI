@@ -18,11 +18,14 @@ tasks:
     name: Basic Data Cleaning
     difficulty: easy
     description: Drop null-heavy rows and remove duplicates from a small employee-style dataset.
+    grader: EasyDataCleaningGrader
   - id: medium_001
     name: Intermediate Data Cleaning
     difficulty: medium
     description: Resolve missing values, validate emails, and remove outliers while preserving useful rows.
+    grader: MediumDataCleaningGrader
   - id: hard_001
     name: Advanced Data Cleaning
     difficulty: hard
     description: Execute a multi-step cleaning pipeline including type conversion and normalization on a larger dataset.
+    grader: HardDataCleaningGrader
