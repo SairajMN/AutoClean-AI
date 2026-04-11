@@ -18,14 +18,14 @@ tasks:
     name: Basic Data Cleaning
     difficulty: easy
     description: Drop null-heavy rows and remove duplicates from a small employee-style dataset.
-    grader: /grade/easy_001
+    grader: https://sairaj2-env.hf.space/grade/easy_001
   - id: medium_001
     name: Intermediate Data Cleaning
     difficulty: medium
     description: Resolve missing values, validate emails, and remove outliers while preserving useful rows.
-    grader: /grade/medium_001
+    grader: https://sairaj2-env.hf.space/grade/medium_001
   - id: hard_001
     name: Advanced Data Cleaning
     difficulty: hard
     description: Execute a multi-step cleaning pipeline including type conversion and normalization on a larger dataset.
-    grader: /grade/hard_001
+    grader: https://sairaj2-env.hf.space/grade/hard_001
