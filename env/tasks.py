@@ -45,7 +45,7 @@ def get_task_config(task_id: str) -> TaskConfig:
                 "duplicate_handling": 0.4,
                 "efficiency": 0.2
             },
-            grader="env.grader.EasyDataCleaningGrader",
+            grader="/grade/easy_001",
         ),
         "medium_001": TaskConfig(
             name="Intermediate Data Cleaning",
@@ -67,7 +67,7 @@ def get_task_config(task_id: str) -> TaskConfig:
                 "outlier_handling": 0.25,
                 "efficiency": 0.2
             },
-            grader="env.grader.MediumDataCleaningGrader",
+            grader="/grade/medium_001",
         ),
         "hard_001": TaskConfig(
             name="Advanced Data Cleaning",
@@ -101,7 +101,7 @@ def get_task_config(task_id: str) -> TaskConfig:
                 "normalization": 0.1,
                 "efficiency": 0.1
             },
-            grader="env.grader.HardDataCleaningGrader",
+            grader="/grade/hard_001",
         )
     }
 
