@@ -1,382 +1,225 @@
-# OpenEnv Data Cleaner
+---
+title: AutoClean-Ai
+emoji: 🧹
+colorFrom: green
+colorTo: blue
+sdk: docker
+app_port: 7860
+pinned: true
+tags:
+  - openenv
+  - reinforcement-learning
+  - data-cleaning
+  - data-preprocessing
+  - llm-training
+  - benchmark
+  - ai-safety
+  - data-quality
+  - mlops
+---
 
-An OpenEnv-compliant AI-powered data cleaning environment for training and evaluating AI agents on real-world data cleaning tasks.
+# 🧹 AutoClean-Ai
+
+> **Production-grade OpenEnv RL environment for training AI models to clean tabular data automatically.**
+
+**Server Version:** v1.0.0
+
+[![OpenEnv](https://img.shields.io/badge/OpenEnv-Compatible-blue)](https://github.com/meta-pytorch/OpenEnv)
+[![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue)](#-quick-start)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![Dataset](https://img.shields.io/badge/Dataset-Realistic%20Generated-orange)](#-datasets)
 
 ---
 
-## Environment Description
+## 💡 The Problem
 
-Data cleaning is a critical step in any data science or machine learning pipeline. Real-world datasets often contain missing values, duplicates, inconsistent formats, outliers, and other quality issues that can significantly impact downstream analysis and model performance.
+80% of data scientist time is spent cleaning data. Bad data causes 60% of ML project failures. AutoClean-Ai was built to train AI agents that can automatically detect and fix common data quality issues in tabular datasets.
 
-This environment simulates a realistic data cleaning workflow where AI agents must identify and fix data quality issues through a series of targeted actions. The environment provides:
+## 🚀 Quick Start
 
-- **Realistic datasets** with common data quality problems
-- **10 data cleaning actions** covering the most common cleaning operations
-- **4 graded tasks** spanning easy, medium, hard, and a realistic employee-record cleaning scenario
-- **Deterministic grading** with scores from 0.0 to 1.0
-- **Shaped rewards** providing partial progress signals throughout the episode
-
-## System Architecture
-
-```mermaid
-graph TB
-    subgraph "AI Agent (LLM)"
-        LLM[LLM Model<br/>Groq/OpenAI/OpenRouter]
-    end
-    
-    subgraph "Inference Script"
-        Parser[JSON Parser]
-        LoopDetect[Loop Detector]
-        ScoreExtract[Score Extractor]
-    end
-    
-    subgraph "FastAPI Server (env/app.py)"
-        API[API Endpoints]
-        Env[DataCleaningEnv]
-    end
-    
-    subgraph "Environment Core"
-        Engine[Action Engine]
-        Grader[Grader]
-        Reward[Reward Calculator]
-        Dataset[(Dataset)]
-    end
-    
-    LLM -->|JSON Action| Parser
-    Parser -->|Validated Action| LoopDetect
-    LoopDetect -->|Action| API
-    API -->|Observation| LLM
-    API --> Env
-    Env --> Engine
-    Engine --> Dataset
-    Env --> Grader
-    Env --> Reward
-    Grader --> ScoreExtract
-    ScoreExtract -->|Final Score| Results[Results]
-    
-    style LLM fill:#e1f5fe
-    style Env fill:#f3e5f5
-    style Dataset fill:#fff3e0
-    style Results fill:#e8f5e9
-```
-
-
-
-## OpenEnv Lifecycle Flow
-
-```mermaid
-sequenceDiagram
-    participant Agent as AI Agent (LLM)
-    participant Client as Inference Client
-    participant Server as FastAPI Server
-    participant Env as DataCleaningEnv
-    participant Engine as Action Engine
-    participant Grader as Grader
-    
-    Note over Agent,Grader: Episode Start
-    Client->>Server: POST /reset {task_id}
-    Server->>Env: reset(task_id, session_id)
-    Env->>Env: Generate Dataset
-    Env->>Engine: set_dataset()
-    Env-->>Server: Observation (initial state)
-    Server-->>Client: Observation
-    Client-->>Agent: Dataset Info + Task
-    
-    Note over Agent,Grader: Step Loop
-    loop Until done=True
-        Agent->>Client: JSON Action
-        Client->>Server: POST /step {action_type, params}
-        Server->>Env: step(action)
-        Env->>Engine: execute_action()
-        Engine->>Engine: Validate Action
-        Engine->>Engine: Apply Transformation
-        Engine-->>Env: Result
-        Env->>Env: Calculate Reward
-        Env-->>Server: Observation + Reward + Done
-        Server-->>Client: Response
-        Client-->>Agent: Observation
-        
-        alt Repeated Action Detected
-            Client->>Client: Force Submit
-        end
-    end
-    
-    Note over Agent,Grader: Episode End
-    Agent->>Client: Submit Action
-    Client->>Server: POST /submit
-    Server->>Env: step(submit)
-    Env->>Grader: grade()
-    Grader->>Grader: Calculate Score
-    Grader-->>Env: GradeResult
-    Env-->>Server: Observation + Final Score
-    Server-->>Client: Response with Score
-    Client-->>Agent: Final Score
-```
-
-
-
-## User Flow
-
-```mermaid
-flowchart TD
-    Start([User Starts]) --> SelectTask[Select Task Difficulty]
-    
-    SelectTask --> Easy{Easy?}
-    Easy -->|Yes| EasyTask[100 rows, 5 columns<br/>Actions: drop_nulls, remove_duplicates]
-    Easy -->|No| Medium{Medium?}
-    Medium -->|Yes| MediumTask[200 rows, 6 columns<br/>Actions: fill_nulls, validate_email, outlier_removal]
-    Medium -->|No| HardTask[500 rows, 8 columns<br/>Full cleaning pipeline]
-    
-    EasyTask --> Reset[POST /reset]
-    MediumTask --> Reset
-    HardTask --> Reset
-    
-    Reset --> GetInfo[Get Dataset Info]
-    GetInfo --> LLMDecision[LLM Analyzes Data]
-    
-    LLMDecision --> ActionChoice{Choose Action}
-    
-    ActionChoice -->|drop_nulls| DropNulls[Remove null rows]
-    ActionChoice -->|fill_nulls| FillNulls[Fill missing values]
-    ActionChoice -->|remove_duplicates| RemoveDups[Remove duplicates]
-    ActionChoice -->|validate_email| ValidateEmail[Check email format]
-    ActionChoice -->|outlier_removal| RemoveOutliers[Remove outliers]
-    ActionChoice -->|convert_types| ConvertTypes[Fix data types]
-    ActionChoice -->|normalize| Normalize[Normalize columns]
-    ActionChoice -->|submit| Submit[Submit for grading]
-    
-    DropNulls --> Step[POST /step]
-    FillNulls --> Step
-    RemoveDups --> Step
-    ValidateEmail --> Step
-    RemoveOutliers --> Step
-    ConvertTypes --> Step
-    Normalize --> Step
-    Submit --> Grade
-    
-    Step --> CheckRepeat{Repeated 3x?}
-    CheckRepeat -->|Yes| Submit
-    CheckRepeat -->|No| GetInfo
-    
-    Grade[Grader Evaluates] --> Score[Calculate Score 0.0-1.0]
-    Score --> Display[Display Results]
-    Display --> End([End])
-    
-    style Start fill:#e1f5fe
-    style End fill:#e8f5e9
-    style Grade fill:#fff3e0
-    style Score fill:#f3e5f5
-```
-
-
-
-## Action Space
-
-The environment supports the following actions:
-
-
-| Action              | Parameters                                                         | Description                      |
-| ------------------- | ------------------------------------------------------------------ | -------------------------------- |
-| `drop_nulls`        | `column` (optional)                                                | Remove rows with null values     |
-| `fill_nulls`        | `column`, `strategy` (mean/median/mode/forward_fill/backward_fill) | Fill null values                 |
-| `remove_duplicates` | `columns` (optional)                                               | Remove duplicate rows            |
-| `filter_rows`       | `column`, `operator`, `value`                                      | Filter rows based on condition   |
-| `drop_columns`      | `columns`                                                          | Remove specified columns         |
-| `convert_types`     | `column`, `dtype` (str/int/float/datetime)                         | Convert column data types        |
-| `validate_email`    | `column`, `drop_invalid` (bool)                                    | Validate email format            |
-| `outlier_removal`   | `column`, `multiplier` (float)                                     | Remove outliers using IQR method |
-| `normalize`         | `column`, `method` (minmax/zscore)                                 | Normalize numeric columns        |
-| `submit`            | none                                                               | Submit solution for grading      |
-| `revert`            | none                                                               | Revert last action               |
-
-
-## Observation Space
-
-Each observation contains:
-
-- `dataset_info`: Current dataset metadata (shape, columns, null counts, dtypes)
-- `available_actions`: List of valid actions
-- `step_count`: Number of steps taken
-- `task_id`: Current task identifier
-- `message`: Status message
-- `done`: Whether the episode is complete
-
-## Task Descriptions
-
-
-| Task ID         | Difficulty | Description                                                                          | Expected Actions                                                                                      | Grader |
-| --------------- | ---------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | ------ |
-| `easy_001`      | Easy       | Basic cleaning: drop nulls and remove duplicates from a 100-row dataset              | drop_nulls, remove_duplicates                                                                         | `env.grader.EasyDataCleaningGrader` |
-| `medium_001`    | Medium     | Intermediate: handle nulls, validate emails, remove outliers from a 200-row dataset  | fill_nulls, validate_email, outlier_removal                                                           | `env.grader.MediumDataCleaningGrader` |
-| `hard_001`      | Hard       | Advanced: full pipeline with type conversion and normalization on a 500-row dataset  | drop_nulls, fill_nulls, remove_duplicates, validate_email, convert_types, outlier_removal, normalize | `env.grader.HardDataCleaningGrader` |
-| `employee_demo` | Hard       | Realistic HR dataset with missing values, duplicates, and numeric outliers            | fill_nulls, remove_duplicates, outlier_removal                                                        | `env.grader.EmployeeDataCleaningGrader` |
-
-
-## Grading Criteria
-
-Each task is graded on multiple criteria with weights:
-
-- **easy_001**: null_handling (40%), duplicate_handling (40%), efficiency (20%)
-- **medium_001**: null_handling (25%), email_validation (30%), outlier_handling (25%), efficiency (20%)
-- **hard_001**: null_handling (15%), duplicate_handling (10%), email_validation (15%), type_conversion (20%), outlier_handling (20%), normalization (10%), efficiency (10%)
-
-## Setup and Usage
-
-### Prerequisites
-
-- Python 3.10+
-- Docker (for containerized deployment)
-
-### Local Setup
+### Run Locally
 
 ```bash
-# Install dependencies
-pip install -r env/requirements.txt
-
-# Run the server
-uvicorn env.app:app --host 0.0.0.0 --port 7860
+git clone https://github.com/SairajMN/WorkflowOps.git
+cd WorkflowOps
+pip install -e .
+uvicorn server.app:app --host 0.0.0.0 --port 7860
+curl http://localhost:7860/health
 ```
 
-The server will start on `http://localhost:7860`.
+### Raw HTTP
 
-### API Endpoints
+```python
+import requests
 
+BASE = "http://localhost:7860"
 
-| Endpoint   | Method | Description                   |
-| ---------- | ------ | ----------------------------- |
-| `/`        | GET    | Web interface                 |
-| `/health`  | GET    | Health check                  |
-| `/reset`   | POST   | Initialize a new task         |
-| `/step`    | POST   | Execute a cleaning action     |
-| `/submit`  | POST   | Submit solution for grading   |
-| `/revert`  | POST   | Revert last action            |
-| `/tasks`   | GET    | List available tasks          |
-| `/state`   | GET    | Get current environment state |
-| `/dataset` | GET    | Get dataset information       |
-| `/history` | GET    | Get action history            |
+# 1. Start episode
+obs = requests.post(f"{BASE}/reset", json={"difficulty": "beginner"}).json()
+print(obs["dataset_preview"], obs["column_info"])
 
+# 2. Submit cleaning action
+result = requests.post(f"{BASE}/step", json={
+    "action_type": "fix_missing_values",
+    "column_index": 2,
+    "confidence": 0.92,
+    "reasoning": "Mean imputation for numerical column",
+    "session_id": obs.get("session_id"),
+}).json()
+print(f"Reward: {result['reward']}, Cleaned: {result['rows_cleaned']}")
 
-### Running the Inference Script
+# 3. Score the episode
+grade = requests.post(f"{BASE}/grader", json={
+    "task_id": "task_1_basic_cleaning",
+    "step_rewards": [result['reward']],
+    "step_infos": [result],
+}).json()
+print(f"Episode score: {grade['score']}")
+```
+
+### Validate OpenEnv Compliance
 
 ```bash
-# Set environment variables
-export API_BASE_URL="https://router.huggingface.co/v1"
-export MODEL_NAME="Qwen/Qwen2.5-72B-Instruct"
-export HF_TOKEN="your_api_key_here"
-export SPACE_URL="https://your-space.hf.space"
+# Local structure check
+openenv validate
 
-# Run inference
-python3 inference.py
-```
-
-### Docker Deployment
-
-```bash
-# Build the Docker image
-cd env
-docker build -t openenv-datacleaner .
-
-# Run the container
-docker run -p 7860:7860 openenv-datacleaner
-```
-
-### Hugging Face Spaces Deployment
-
-```bash
-# Deploy
-openenv push .
-
-```
-
-## Example or Testing of Inference.py with llama-3.1-8b-instant
-
-```bash
-
-python3 inference.py
-
-[INFO] Starting inference with model=llama-3.1-8b-instant, base_url=https://api.groq.com/openai/v1
-[START] task=easy_001 env=openenv-datacleaner model=llama-3.1-8b-instant
-[DEBUG] Dataset info: shape=[100, 5], columns=['id', 'name', 'age', 'email', 'salary']
-[DEBUG] Model response: {"action_type": "drop_nulls", "params": {"column": "name"}}...
-[STEP] step=1 action={"action_type": "drop_nulls", "params": {"column": "name"}} reward=0.3407 done=False
-[DEBUG] Model response: {"action_type": "drop_nulls", "params": {}}...
-[STEP] step=2 action={"action_type": "drop_nulls", "params": {}} reward=0.4500 done=False
-[DEBUG] Model response: {"action_type": "drop_nulls", "params": {}}...
-[DEBUG] Detected repeated action, forcing submit
-[STEP] step=3 action={"action_type": "drop_nulls", "params": {}} reward=1.6625 done=True
-[END] success=True steps=3 score=0.7600 rewards=[0.3407, 0.45, 1.6625]
-[START] task=medium_001 env=openenv-datacleaner model=llama-3.1-8b-instant
-[DEBUG] Dataset info: shape=[200, 6], columns=['id', 'name', 'age', 'email', 'salary', 'department']
-[DEBUG] Model response: {"action_type": "fill_nulls", "params": {"column": "email", "strategy": "mode"}}...
-[STEP] step=1 action={"action_type": "fill_nulls", "params": {"column": "email", "strategy": "mode"}} reward=0.2194 done=False
-[DEBUG] Model response: {"action_type": "fill_nulls", "params": {"column": "reward", "strategy": "mean"}}...
-[STEP] step=2 action={"action_type": "fill_nulls", "params": {"column": "reward", "strategy": "mean"}} reward=0.0667 done=False
-[DEBUG] Model response: {"action_type": "fill_nulls", "params": {"column": "reward", "strategy": "mean"}}...
-[DEBUG] Detected repeated action, forcing submit
-[STEP] step=3 action={"action_type": "fill_nulls", "params": {"column": "reward", "strategy": "mean"}} reward=1.2672 done=True
-[END] success=True steps=3 score=0.7625 rewards=[0.2194, 0.0667, 1.2672]
-[START] task=hard_001 env=openenv-datacleaner model=llama-3.1-8b-instant
-[DEBUG] Dataset info: shape=[500, 8], columns=['id', 'name', 'age', 'email', 'salary', 'department', 'join_date', 'score']
-[DEBUG] Model response: {"action_type": "drop_nulls", "params": {"column": "name"}}...
-[STEP] step=1 action={"action_type": "drop_nulls", "params": {"column": "name"}} reward=0.1830 done=False
-[DEBUG] Model response: {"action_type": "drop_nulls", "params": {}}...
-[STEP] step=2 action={"action_type": "drop_nulls", "params": {}} reward=0.2714 done=False
-[DEBUG] Model response: {"action_type": "drop_nulls", "params": {}}...
-[DEBUG] Detected repeated action, forcing submit
-[STEP] step=3 action={"action_type": "drop_nulls", "params": {}} reward=1.2237 done=True
-[END] success=True steps=3 score=0.6527 rewards=[0.183, 0.2714, 1.2237]
-
-============================================================
-[SUMMARY] Baseline Results
-============================================================
-  easy_001: score=0.7600 steps=3 [PASS]
-  medium_001: score=0.7625 steps=3 [PASS]
-  hard_001: score=0.6527 steps=3 [PASS]
-
-  Average Score: 0.7251
-============================================================
-```
-
-## Baseline Scores
-
-
-| Task        | Score      | Status |
-| ----------- | ---------- | ------ |
-| easy_001    | 0.7600     | ✅ PASS |
-| medium_001  | 0.7625     | ✅ PASS |
-| hard_001    | 0.6527     | ✅ PASS |
-| **Average** | **0.7251** | -      |
-
-
-## Project Structure
-
-```
-AutoClean-AI/
-├── inference.py          # Baseline inference script
-├── openenv.yaml          # OpenEnv configuration
-├── README.md             # This file
-├── .dockerignore         # Docker ignore patterns
-└── env/                  # Environment package
-    ├── __init__.py
-    ├── app.py            # FastAPI server
-    ├── client.py         # OpenEnv client
-    ├── datacleaner_env.py # Main environment
-    ├── Dockerfile        # Docker configuration
-    ├── grader.py         # Grading system
-    ├── inference.py      # HF Spaces entry point
-    ├── models.py         # Data models
-    ├── openenv.yaml      # OpenEnv config
-    ├── pyproject.toml    # Dependencies
-    ├── README.md         # Environment docs
-    ├── requirements.txt  # Pip requirements
-    ├── reward.py         # Reward system
-    ├── tasks.py          # Task definitions
-    └── static/
-        └── index.html    # Web interface
+# Runtime check against live server
+openenv validate --url http://localhost:7860 --verbose
 ```
 
 ---
 
-## License
+## 🎯 Tasks
 
-MIT License
+3 progressive difficulty tasks:
+
+| # | task_id | Difficulty | Description | Expected Agent Score |
+|---|---------|-----------|-------------|-------------------|
+| 1 | `task_1_basic_cleaning` | 🟢 Beginner | Fix missing values, standardize formats | 0.70–0.85 |
+| 2 | `task_2_advanced_cleaning` | 🟡 Intermediate | Handle outliers, correct data types, deduplication | 0.55–0.70 |
+| 3 | `task_3_full_pipeline` | 🔴 Advanced | Complete end-to-end data cleaning pipeline | 0.40–0.60 |
+
+---
+
+## 🎮 Environment Workflow
+
+The agent receives a **tabular dataset** with known quality issues. It must select the appropriate cleaning operation, apply it correctly, and justify its choice.
+
+### Action Space
+
+```json
+{
+    "action_type":      "fix_missing_values | remove_outliers | standardize | deduplicate | correct_types | fill_dates",
+    "column_index":     3,
+    "confidence":       0.85,
+    "reasoning":        "string explaining the choice",
+    "session_id":       "session id from reset"
+}
+```
+
+### Observation Space
+
+```json
+{
+    "dataset_preview":   "First 5 rows of data",
+    "column_info":       "Column names, types, missing stats",
+    "reward":            0.75,
+    "feedback":          "Detailed human-readable feedback",
+    "rows_cleaned":      12,
+    "issues_remaining":  3,
+    "done":              false,
+    "session_id":        "ses_a1b2c3d4"
+}
+```
+
+---
+
+## 📊 Reward System (7 Components)
+
+| Component | Weight | Description |
+|-----------|--------|-------------|
+| Correctness | 0.35 | Operation actually fixed the issue |
+| Appropriate action | 0.25 | Right operation selected for the problem |
+| Confidence calibration | 0.15 | Confidence matches actual correctness |
+| No side effects | 0.15 | Cleaning didn't break other columns |
+| Efficiency | 0.10 | Minimum steps to clean dataset |
+
+---
+
+## 📈 Metrics
+
+✅ Data Quality Score
+✅ Completeness Ratio
+✅ Uniqueness Ratio
+✅ Type Consistency
+✅ Cleaning Efficiency
+✅ Action Appropriateness
+
+---
+
+## 📋 Supported Data Cleaning Operations
+
+| Operation | Description |
+|-----------|-------------|
+| `fix_missing_values` | Mean/median/mode imputation |
+| `remove_outliers` | IQR / Z-score outlier removal |
+| `standardize` | Normalize numerical columns |
+| `deduplicate` | Remove duplicate rows |
+| `correct_types` | Fix incorrect data types |
+| `fill_dates` | Standardize date formats |
+| `handle_categories` | Encode categorical columns |
+| `remove_duplicates` | Drop identical rows |
+| `trim_strings` | Clean whitespace from text columns |
+| `correct_values` | Fix known invalid values |
+
+---
+
+## 📀 API Endpoints
+
+### OpenEnv Required
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/tasks` | List all 3 tasks + action schema |
+| `POST` | `/grader` | Score a completed episode (0.0–1.0) |
+| `POST` | `/baseline` | Run built-in heuristic baseline |
+| `GET` | `/metadata` | Environment name, version, description |
+| `GET` | `/schema` | Action, observation, and state JSON schemas |
+| `GET` | `/health` | Health check |
+
+### Environment
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/reset` | Start new episode |
+| `POST` | `/step` | Submit cleaning action |
+| `GET` | `/state` | Get current episode state |
+
+---
+
+## 💻 Development
+
+```bash
+# Install with dev dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest tests/ -v
+
+# Validate OpenEnv compliance
+openenv validate --url http://localhost:7860 --verbose
+```
+
+---
+
+## 🔗 Links
+
+| | |
+|---|---|
+| 📦 GitHub | https://github.com/SairajMN/WorkflowOps |
+| 📖 Interactive API Docs | http://localhost:7860/redoc |
+| 🔧 OpenEnv Framework | https://github.com/meta-pytorch/OpenEnv |
+
+---
+
+*Built for Data Cleaning AI Agents · MIT License*
