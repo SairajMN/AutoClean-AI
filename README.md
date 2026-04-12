@@ -216,7 +216,7 @@ openenv validate --url http://localhost:7860 --verbose
 
 | | |
 |---|---|
-| 📦 GitHub | https://github.com/SairajMN/WorkflowOps |
+| 📦 GitHub | https://github.com/SairajMN/AutoClean-AI |
 | 📖 Interactive API Docs | http://localhost:7860/redoc |
 | 🔧 OpenEnv Framework | https://github.com/meta-pytorch/OpenEnv |
 
