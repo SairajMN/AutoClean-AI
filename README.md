@@ -88,6 +88,174 @@ openenv validate --url http://localhost:7860 --verbose
 ```
 
 ---
+```bash
+python3 inference.py
+
+2026-04-12 22:19:47,173 [INFO] Connecting to environment: https://sairaj2-openenv-datacleaner.hf.space
+2026-04-12 22:19:49,338 [INFO]   Environment: AutoClean-AI v1.0.0 — healthy
+2026-04-12 22:19:49,711 [INFO]   Available tasks: ['easy_001', 'medium_001', 'hard_001', 'employee_demo']
+2026-04-12 22:19:49,711 [INFO] Using LLM agent: qwen/qwen3-next-80b-a3b-instruct:free via https://openrouter.ai/api/v1
+2026-04-12 22:19:50,044 [INFO] 
+=======================================================
+2026-04-12 22:19:50,044 [INFO] TASK: easy_001  (difficulty=beginner)
+2026-04-12 22:19:50,044 [INFO] =======================================================
+[START] task=easy_001 env=openenv-datacleaner model=qwen/qwen3-next-80b-a3b-instruct:free
+2026-04-12 22:19:52,471 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:19:52,472 [INFO] Retrying request to /chat/completions in 0.464138 seconds
+2026-04-12 22:19:53,580 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:19:53,580 [INFO] Retrying request to /chat/completions in 0.815704 seconds
+2026-04-12 22:19:55,038 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:19:55,041 [WARNING] LLM call failed: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'qwen/qwen3-next-80b-a3b-instruct:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_36ZHxohbiGTyLfq9vP3Sf6ojZMM'}
+[STEP] step=1 action=remove_duplicates reward=0.50 done=false error=null
+2026-04-12 22:19:55,383 [INFO]   [easy_001] ep=1 step=1 reward=0.500
+2026-04-12 22:19:55,965 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:19:55,967 [INFO] Retrying request to /chat/completions in 0.458206 seconds
+2026-04-12 22:19:57,083 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 402 Payment Required"
+2026-04-12 22:19:57,084 [WARNING] LLM call failed: Error code: 402 - {'error': {'message': 'Provider returned error', 'code': 402, 'metadata': {'raw': '{"error":"API key USD spend limit exceeded. Your account may still have USD balance, but this API key has reached its configured USD spending limit."}', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_36ZHxohbiGTyLfq9vP3Sf6ojZMM'}
+[STEP] step=2 action=submit reward=1.00 done=true error=null
+2026-04-12 22:19:57,485 [INFO]   [easy_001] ep=1 step=2 reward=1.000
+2026-04-12 22:19:58,443 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:19:58,445 [INFO] Retrying request to /chat/completions in 0.475367 seconds
+2026-04-12 22:19:59,627 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:19:59,628 [INFO] Retrying request to /chat/completions in 0.844512 seconds
+2026-04-12 22:20:01,065 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:01,067 [WARNING] LLM call failed: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'qwen/qwen3-next-80b-a3b-instruct:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_36ZHxohbiGTyLfq9vP3Sf6ojZMM'}
+[STEP] step=1 action=remove_duplicates reward=0.50 done=false error=null
+2026-04-12 22:20:01,372 [INFO]   [easy_001] ep=2 step=1 reward=0.500
+2026-04-12 22:20:01,969 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:01,971 [INFO] Retrying request to /chat/completions in 0.387579 seconds
+2026-04-12 22:20:03,191 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:03,193 [INFO] Retrying request to /chat/completions in 0.930048 seconds
+2026-04-12 22:20:04,715 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:04,717 [WARNING] LLM call failed: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'qwen/qwen3-next-80b-a3b-instruct:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_36ZHxohbiGTyLfq9vP3Sf6ojZMM'}
+[STEP] step=2 action=submit reward=1.00 done=true error=null
+2026-04-12 22:20:05,054 [INFO]   [easy_001] ep=2 step=2 reward=1.000
+2026-04-12 22:20:06,558 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:06,560 [INFO] Retrying request to /chat/completions in 0.377761 seconds
+2026-04-12 22:20:08,138 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:08,139 [INFO] Retrying request to /chat/completions in 0.790773 seconds
+2026-04-12 22:20:09,531 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:09,533 [WARNING] LLM call failed: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'qwen/qwen3-next-80b-a3b-instruct:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_36ZHxohbiGTyLfq9vP3Sf6ojZMM'}
+[STEP] step=1 action=remove_duplicates reward=0.50 done=false error=null
+2026-04-12 22:20:09,877 [INFO]   [easy_001] ep=3 step=1 reward=0.500
+2026-04-12 22:20:10,478 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:10,480 [INFO] Retrying request to /chat/completions in 0.432287 seconds
+2026-04-12 22:20:11,245 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:11,247 [INFO] Retrying request to /chat/completions in 0.841678 seconds
+2026-04-12 22:20:12,445 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:12,447 [WARNING] LLM call failed: Error code: 429 - {'error': {'message': 'Rate limit exceeded: limit_rpm/qwen/qwen3-next-80b-a3b-instruct-2509/94248808-ba97-4e3c-be60-1cb0928db51d. High demand for qwen/qwen3-next-80b-a3b-instruct:free on OpenRouter - limited to 8 requests per minute. Please retry shortly.', 'code': 429, 'metadata': {'headers': {'X-RateLimit-Limit': '8', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': '1776012660000'}, 'provider_name': None}}, 'user_id': 'user_36ZHxohbiGTyLfq9vP3Sf6ojZMM'}
+[STEP] step=2 action=submit reward=1.00 done=true error=null
+2026-04-12 22:20:12,771 [INFO]   [easy_001] ep=3 step=2 reward=1.000
+[END] success=true steps=6 score=0.750 rewards=0.50,1.00,0.50,1.00,0.50,1.00
+2026-04-12 22:20:12,771 [INFO] 
+  Task score: 0.7500 ± 0.0000
+2026-04-12 22:20:12,771 [INFO] 
+=======================================================
+2026-04-12 22:20:12,771 [INFO] TASK: medium_001  (difficulty=intermediate)
+2026-04-12 22:20:12,771 [INFO] =======================================================
+[START] task=medium_001 env=openenv-datacleaner model=qwen/qwen3-next-80b-a3b-instruct:free
+2026-04-12 22:20:13,504 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:13,504 [INFO] Retrying request to /chat/completions in 0.469513 seconds
+2026-04-12 22:20:14,323 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:14,323 [INFO] Retrying request to /chat/completions in 0.933486 seconds
+2026-04-12 22:20:16,371 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:16,371 [WARNING] LLM call failed: Error code: 429 - {'error': {'message': 'Rate limit exceeded: limit_rpm/qwen/qwen3-next-80b-a3b-instruct-2509/94248808-ba97-4e3c-be60-1cb0928db51d. High demand for qwen/qwen3-next-80b-a3b-instruct:free on OpenRouter - limited to 8 requests per minute. Please retry shortly.', 'code': 429, 'metadata': {'headers': {'X-RateLimit-Limit': '8', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': '1776012660000'}, 'provider_name': None}}, 'user_id': 'user_36ZHxohbiGTyLfq9vP3Sf6ojZMM'}
+[STEP] step=1 action=submit reward=0.50 done=true error=null
+2026-04-12 22:20:16,811 [INFO]   [medium_001] ep=1 step=1 reward=0.500
+2026-04-12 22:20:17,561 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:17,562 [INFO] Retrying request to /chat/completions in 0.445498 seconds
+2026-04-12 22:20:18,419 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:18,421 [INFO] Retrying request to /chat/completions in 0.807103 seconds
+2026-04-12 22:20:19,640 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:19,641 [WARNING] LLM call failed: Error code: 429 - {'error': {'message': 'Rate limit exceeded: limit_rpm/qwen/qwen3-next-80b-a3b-instruct-2509/94248808-ba97-4e3c-be60-1cb0928db51d. High demand for qwen/qwen3-next-80b-a3b-instruct:free on OpenRouter - limited to 8 requests per minute. Please retry shortly.', 'code': 429, 'metadata': {'headers': {'X-RateLimit-Limit': '8', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': '1776012660000'}, 'provider_name': None}}, 'user_id': 'user_36ZHxohbiGTyLfq9vP3Sf6ojZMM'}
+[STEP] step=1 action=submit reward=0.50 done=true error=null
+2026-04-12 22:20:19,980 [INFO]   [medium_001] ep=2 step=1 reward=0.500
+2026-04-12 22:20:20,626 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:20,627 [INFO] Retrying request to /chat/completions in 0.397460 seconds
+2026-04-12 22:20:21,491 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:21,493 [INFO] Retrying request to /chat/completions in 0.964606 seconds
+2026-04-12 22:20:22,821 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:22,823 [WARNING] LLM call failed: Error code: 429 - {'error': {'message': 'Rate limit exceeded: limit_rpm/qwen/qwen3-next-80b-a3b-instruct-2509/94248808-ba97-4e3c-be60-1cb0928db51d. High demand for qwen/qwen3-next-80b-a3b-instruct:free on OpenRouter - limited to 8 requests per minute. Please retry shortly.', 'code': 429, 'metadata': {'headers': {'X-RateLimit-Limit': '8', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': '1776012660000'}, 'provider_name': None}}, 'user_id': 'user_36ZHxohbiGTyLfq9vP3Sf6ojZMM'}
+[STEP] step=1 action=submit reward=0.50 done=true error=null
+2026-04-12 22:20:23,198 [INFO]   [medium_001] ep=3 step=1 reward=0.500
+[END] success=true steps=3 score=0.500 rewards=0.50,0.50,0.50
+2026-04-12 22:20:23,199 [INFO] 
+  Task score: 0.5000 ± 0.0000
+2026-04-12 22:20:23,199 [INFO] 
+=======================================================
+2026-04-12 22:20:23,199 [INFO] TASK: hard_001  (difficulty=advanced)
+2026-04-12 22:20:23,199 [INFO] =======================================================
+[START] task=hard_001 env=openenv-datacleaner model=qwen/qwen3-next-80b-a3b-instruct:free
+2026-04-12 22:20:24,051 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:24,052 [INFO] Retrying request to /chat/completions in 0.472201 seconds
+2026-04-12 22:20:25,173 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:25,174 [INFO] Retrying request to /chat/completions in 0.768212 seconds
+2026-04-12 22:20:26,285 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:26,286 [WARNING] LLM call failed: Error code: 429 - {'error': {'message': 'Rate limit exceeded: limit_rpm/qwen/qwen3-next-80b-a3b-instruct-2509/94248808-ba97-4e3c-be60-1cb0928db51d. High demand for qwen/qwen3-next-80b-a3b-instruct:free on OpenRouter - limited to 8 requests per minute. Please retry shortly.', 'code': 429, 'metadata': {'headers': {'X-RateLimit-Limit': '8', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': '1776012660000'}, 'provider_name': None}}, 'user_id': 'user_36ZHxohbiGTyLfq9vP3Sf6ojZMM'}
+[STEP] step=1 action=remove_duplicates reward=0.50 done=false error=null
+2026-04-12 22:20:26,614 [INFO]   [hard_001] ep=1 step=1 reward=0.500
+2026-04-12 22:20:27,026 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:27,026 [INFO] Retrying request to /chat/completions in 0.446455 seconds
+2026-04-12 22:20:28,422 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:28,424 [INFO] Retrying request to /chat/completions in 0.765570 seconds
+2026-04-12 22:20:29,526 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:29,527 [WARNING] LLM call failed: Error code: 429 - {'error': {'message': 'Rate limit exceeded: limit_rpm/qwen/qwen3-next-80b-a3b-instruct-2509/94248808-ba97-4e3c-be60-1cb0928db51d. High demand for qwen/qwen3-next-80b-a3b-instruct:free on OpenRouter - limited to 8 requests per minute. Please retry shortly.', 'code': 429, 'metadata': {'headers': {'X-RateLimit-Limit': '8', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': '1776012660000'}, 'provider_name': None}}, 'user_id': 'user_36ZHxohbiGTyLfq9vP3Sf6ojZMM'}
+[STEP] step=2 action=submit reward=1.00 done=true error=null
+2026-04-12 22:20:29,927 [INFO]   [hard_001] ep=1 step=2 reward=1.000
+2026-04-12 22:20:30,587 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:30,589 [INFO] Retrying request to /chat/completions in 0.408676 seconds
+2026-04-12 22:20:31,424 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:31,426 [INFO] Retrying request to /chat/completions in 0.778604 seconds
+2026-04-12 22:20:32,608 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:32,611 [WARNING] LLM call failed: Error code: 429 - {'error': {'message': 'Rate limit exceeded: limit_rpm/qwen/qwen3-next-80b-a3b-instruct-2509/94248808-ba97-4e3c-be60-1cb0928db51d. High demand for qwen/qwen3-next-80b-a3b-instruct:free on OpenRouter - limited to 8 requests per minute. Please retry shortly.', 'code': 429, 'metadata': {'headers': {'X-RateLimit-Limit': '8', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': '1776012660000'}, 'provider_name': None}}, 'user_id': 'user_36ZHxohbiGTyLfq9vP3Sf6ojZMM'}
+[STEP] step=1 action=remove_duplicates reward=0.50 done=false error=null
+2026-04-12 22:20:33,065 [INFO]   [hard_001] ep=2 step=1 reward=0.500
+2026-04-12 22:20:33,472 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:33,473 [INFO] Retrying request to /chat/completions in 0.458515 seconds
+2026-04-12 22:20:34,394 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:34,395 [INFO] Retrying request to /chat/completions in 0.825773 seconds
+2026-04-12 22:20:35,545 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:35,547 [WARNING] LLM call failed: Error code: 429 - {'error': {'message': 'Rate limit exceeded: limit_rpm/qwen/qwen3-next-80b-a3b-instruct-2509/94248808-ba97-4e3c-be60-1cb0928db51d. High demand for qwen/qwen3-next-80b-a3b-instruct:free on OpenRouter - limited to 8 requests per minute. Please retry shortly.', 'code': 429, 'metadata': {'headers': {'X-RateLimit-Limit': '8', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': '1776012660000'}, 'provider_name': None}}, 'user_id': 'user_36ZHxohbiGTyLfq9vP3Sf6ojZMM'}
+[STEP] step=2 action=submit reward=1.00 done=true error=null
+2026-04-12 22:20:35,874 [INFO]   [hard_001] ep=2 step=2 reward=1.000
+2026-04-12 22:20:36,572 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:36,573 [INFO] Retrying request to /chat/completions in 0.417865 seconds
+2026-04-12 22:20:37,307 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:37,309 [INFO] Retrying request to /chat/completions in 0.985335 seconds
+2026-04-12 22:20:38,616 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:38,618 [WARNING] LLM call failed: Error code: 429 - {'error': {'message': 'Rate limit exceeded: limit_rpm/qwen/qwen3-next-80b-a3b-instruct-2509/94248808-ba97-4e3c-be60-1cb0928db51d. High demand for qwen/qwen3-next-80b-a3b-instruct:free on OpenRouter - limited to 8 requests per minute. Please retry shortly.', 'code': 429, 'metadata': {'headers': {'X-RateLimit-Limit': '8', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': '1776012660000'}, 'provider_name': None}}, 'user_id': 'user_36ZHxohbiGTyLfq9vP3Sf6ojZMM'}
+[STEP] step=1 action=remove_duplicates reward=0.50 done=false error=null
+2026-04-12 22:20:38,959 [INFO]   [hard_001] ep=3 step=1 reward=0.500
+2026-04-12 22:20:39,310 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:39,311 [INFO] Retrying request to /chat/completions in 0.375729 seconds
+2026-04-12 22:20:40,045 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:40,046 [INFO] Retrying request to /chat/completions in 0.926493 seconds
+2026-04-12 22:20:41,322 [INFO] HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-12 22:20:41,325 [WARNING] LLM call failed: Error code: 429 - {'error': {'message': 'Rate limit exceeded: limit_rpm/qwen/qwen3-next-80b-a3b-instruct-2509/94248808-ba97-4e3c-be60-1cb0928db51d. High demand for qwen/qwen3-next-80b-a3b-instruct:free on OpenRouter - limited to 8 requests per minute. Please retry shortly.', 'code': 429, 'metadata': {'headers': {'X-RateLimit-Limit': '8', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': '1776012660000'}, 'provider_name': None}}, 'user_id': 'user_36ZHxohbiGTyLfq9vP3Sf6ojZMM'}
+[STEP] step=2 action=submit reward=1.00 done=true error=null
+2026-04-12 22:20:41,690 [INFO]   [hard_001] ep=3 step=2 reward=1.000
+[END] success=true steps=6 score=0.750 rewards=0.50,1.00,0.50,1.00,0.50,1.00
+2026-04-12 22:20:41,690 [INFO] 
+  Task score: 0.7500 ± 0.0000
+
+=======================================================
+INFERENCE RESULTS
+=======================================================
+Model      : qwen/qwen3-next-80b-a3b-instruct:free
+Seed       : 42  |  3 episodes x 8 steps
+Elapsed    : 51.6s
+
+  easy_001                                   0.7500 +- 0.0000  |###############     |
+  medium_001                                 0.5000 +- 0.0000  |##########          |
+  hard_001                                   0.7500 +- 0.0000  |###############     |
+
+  OVERALL                                    0.6667
+=======================================================
+```
+
+---
+
+---
 
 ## 🎯 Tasks
 
